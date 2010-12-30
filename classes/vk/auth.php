@@ -81,6 +81,8 @@ class Vk_Auth {
 		{
 			if ( ! empty($vk_cookie))
 			{
+				
+				
 				$cookie_data = array();
 
 				foreach (explode('&', $vk_cookie) as $item)
@@ -90,7 +92,7 @@ class Vk_Auth {
 				}
 
 				// Check Auth SIG
-				$string = sprintf("expire=%smid=%ssecret=%ssid=%s%s", $data['expire'], $data['mid'], $data['secret'], $data['sid'], $this->config['VK_API_PASSWORD']);
+				$string = sprintf("expire=%smid=%ssecret=%ssid=%s", $data['expire'], $data['mid'], $data['secret'], $data['sid']);
 
 				if (md5($string) === $data['sig'] && $data['expire'] > time())
 				{
@@ -103,9 +105,12 @@ class Vk_Auth {
 							'api_id'	=> $this->config['VK_API_ID'],
 							'code'		=> 'return {me: API.getProfiles({uids: API.getVariable({key: 1280}), fields: "'.implode(', ',$this->config['VK_API_FILEDS']).'"})[0]};',
 							'format'	=> 'JSON',
-							'method'	=> 'execute',
-							'v'			=> '3.0',
+							'method'	=> 'execute',					
 						);
+						if( $this->config['TEST_MODE'] ){
+						    $request['test_mode'] = '1';
+						}
+						$request['v'] = '3.0';
 
 						// Generate API SIG
 						// @link http://vkontakte.ru/pages.php?o=-1&p=Взаимодействие приложения с API
@@ -132,7 +137,7 @@ class Vk_Auth {
 						curl_setopt_array($ch, $options);    
 						$response = curl_exec($ch);
 						curl_close($ch);
-
+						
 						if ( ! empty($response))
 						{
 							$login = json_decode($response, TRUE);
