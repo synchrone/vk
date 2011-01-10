@@ -93,7 +93,7 @@ class Vk_Auth {
 
 				// Check Auth SIG
 				$string = sprintf("expire=%smid=%ssecret=%ssid=%s", $data['expire'], $data['mid'], $data['secret'], $data['sid']);
-
+				$string .= $this->_config['VK_API_SECRET'];
 				if (md5($string) === $data['sig'] && $data['expire'] > time())
 				{
 					$ch = curl_init();
