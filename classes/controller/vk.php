@@ -24,5 +24,8 @@ class Controller_Vk extends Controller {
 			Request::instance()->redirect('/vk');
 		}
 	}
+    public function action_xd_receiver(){
+        $this->request->response = View::factory('xd_receiver');
+    }
 
 } // End Vk
