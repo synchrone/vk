@@ -6,6 +6,7 @@ return array(
 	'VK_API_ID'		=> 'YOUR_ID',
 	'VK_API_PASSWORD'	=> 'YOUR_PASS',
 	'VK_API_SECRET'		=> 'YOUR_SECRET',
+	'TEST_MODE' 		=> TRUE,
 
 	'VK_API_FILEDS'		=> array(
 		'photo',
