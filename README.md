@@ -41,7 +41,7 @@ there's no need in it, as it's covered by vk controller
 
 ### Controller and actions
 
-See `classes/controller/vk.php` for auth-related stuff (originally by Slayer)
+See `classes/controller/vk.php` for auth-related stuff (originally by https://github.com/Slaver/vk)
 
 See `classes/vk/desktopapi.php` for vk data export features (like group info, audio, walls and other,
 which are covered by http://vkontakte.ru/developers.php?o=-1&p=%CE%EF%E8%F1%E0%ED%E8%E5%20%EC%E5%F2%EE%E4%EE%E2%20API
