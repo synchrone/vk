@@ -6,13 +6,13 @@
 
 First, add the submodule to your Git application:
 
-    git submodule add git://github.com/Slaver/vk.git modules/vk
+    git submodule add git://github.com/synchrone/vk.git modules/vk
     git submodule update --init
 
 Or clone the the module separately:
 
     cd modules
-    git clone git://github.com/Slaver/vk.git vk
+    git clone git://github.com/synchrone/vk.git vk
 
 ### Update module
 
@@ -36,21 +36,13 @@ Edit `application/bootstrap.php` and add a the module:
 Create new API at [vk.com](http://vkontakte.ru/apps.php?act=add).
 [Get unique API ID, password and secret key](http://vkontakte.ru/apps.php#act=admin) and put it in `config/vk.php`.
 
-### Create xd_receiver.htm
-
-Create file xd_receiver.htm in root directory of your site. VK authentication doesn't work without this file
-
-    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-    <html xmlns="http://www.w3.org/1999/xhtml">
-      <head>
-        <title>Open API XD Receiver</title>
-      </head>
-      <body>
-        <script src="http://vkontakte.ru/js/api/xd_receiver.js" type="text/javascript"></script>
-      </body>
-    </html>
+### Don't create xd_receiver.htm
+there's no need in it, as it's covered by vk controller
 
 ### Controller and actions
 
-See `classes/controller/vk.php`
+See `classes/controller/vk.php` for auth-related stuff (originally by Slayer)
+
+See `classes/vk/desktopapi.php` for vk data export features (like group info, audio, walls and other,
+which are covered by http://vkontakte.ru/developers.php?o=-1&p=%CE%EF%E8%F1%E0%ED%E8%E5%20%EC%E5%F2%EE%E4%EE%E2%20API
+as well as http://vkontakte.ru/developers.php?s=0&id=-1_11226273
