@@ -1,55 +1,71 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 
-/**
- * Desktop API module for  vk.com
- *
- * @package    Vk_DesktopApi
- * @author     Alexander Bogdanov
- * @copyright  (c) 2010 Alexander Bogdanov <syn@li.ru>
- * @license    http://kohanaphp.com/license.html
- */
-class VK_DesktopApi {
+
+class VK_DesktopApi extends Vk_DocumentedApi{
+
+	/*
+		Код	Описание
+		+1	Пользователь разрешил отправлять ему уведомления.
+		+2	Доступ к друзьям.
+		+4	Доступ к фотографиям.
+		+8	Доступ к аудиозаписям.
+		+16	Доступ к видеозаписям.
+		+32	Доступ к предложениям.
+		+64	Доступ к вопросам.
+		+128	Доступ к wiki-страницам.
+		+256	Добавление ссылки на приложение в меню слева.
+		+512	Добавление ссылки на приложение для быстрой публикации на стенах пользователей.
+		+1024	Доступ к статусам пользователя.
+		+2048	Доступ заметкам пользователя.
+		+4096	(для Desktop-приложений) Доступ к расширенным методам работы с сообщениями.
+		+8192	Доступ к обычным и расширенным методам работы со стеной.
+	 */
     private $accessLevels = array(
         1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192
     );
-    private $userLoginUrl;
-    private $userLogin2Url;
-    private $loginUrl;
+
     private $userCookies;
-    
-    private $apiUrl;
-    private $appId;
-    private $appSecret;
     private $appCookies;
 
     private $op_history = array();
     
     // Instances
 	protected static $instance;
-	public static function Instance()
+	
+	/**
+	 * @static
+	 * @throws Exception
+	 * @param string $config
+	 * @return VK_DesktopApi
+	 */
+    public static function Instance($config='default')
 	{
-		if ( ! isset(VK_DesktopApi::$instance))
-		{
-			// Load the configuration for this type
-			$config = Kohana::config('vk.VK_DESKTOP');
 
-			// Create a new session instance
-			VK_DesktopApi::$instance = new VK_DesktopApi($config);
+		if(is_array($config))
+		{
+			$instanceId = $config['user_email'].$config['app_id'];
+		}
+		else if(is_string($config) && $cfg_sect = Kohana::config('vk.VK_DESKTOP.'.$config))
+		{
+			$instanceId = $config;
+			$config = $cfg_sect;
+		}
+		else{
+			throw new Exception('$config is not an array or a config section id');
 		}
 
-		return VK_DesktopApi::$instance;
+		if ( ! isset(self::$instance[$instanceId]))
+		{
+			self::$instance[$instanceId] = new self($config);
+		}
+		return self::$instance[$instanceId];
 	}
 
 	protected $config;
-    public function __construct($config){
-        $this->loginUrl = $config['applogin_url'];
-        $this->apiUrl = $config['api_url'];
-        $this->userLoginUrl = $config['userlogin_url'];
-        $this->userLogin2Url = $config['userlogin2_url'];
-        $this->appId = $config['app_id'];
-        $this->appSecret = $config['app_secret'];
+    public function __construct(&$config){
+		$this->config = $config;
         $this->LoginUser($config['user_email'],$config['user_pass']);
-        $this->LoginApp();
+		$this->LoginApp();
     }
     public function __wakeup(){
         $this->op_history = array();
@@ -78,7 +94,7 @@ class VK_DesktopApi {
             $this->LoginApp();
         }
         if (!$params) $params = array();
-		$params['api_id'] = $this->appId;
+		$params['api_id'] = $this->config['app_id'];
         $params['method'] = $method;
         //sig
 		if (!isset($params['v'])) $params['v'] = '3.0';
@@ -95,16 +111,17 @@ class VK_DesktopApi {
         $params['sig'] = md5($sig);
         $params['sid'] = $this->appCookies['sid'];
 
-		$query = $this->curl($this->apiUrl,$params);
+		$query = $this->curl($this->config['api_url'],$params);
 		$res = (array)json_decode($query['contents'], true);
 
         if(!isset($res['response'])){
             ob_start();
-            echo "<h4>VK Response:</h4>";
-            var_dump($res);
-            echo "<h4>Request history:</h4>";
-            var_dump($this->op_history);
+				echo "<h4>VK Response:</h4>";
+				var_dump($res);
+				echo "<h4>Request history:</h4>";
+				var_dump($this->op_history);
             $e_data = ob_get_clean();
+			
             if(isset($res['error'])){
                  throw new VK_Exception('Error: '.$res['error']['error_code'].' - '.$res['error']['error_msg'],$e_data);
             }
@@ -117,7 +134,7 @@ class VK_DesktopApi {
     
     private function LoginUser($email,$password){
         $stage1 = $this->curl(
-            $this->userLoginUrl,
+            $this->config['userlogin_url'],
             null,
             array(
                 CURLOPT_POSTFIELDS => $this->params(array(
@@ -135,7 +152,7 @@ class VK_DesktopApi {
         $stage2hash = $stage2hash[1];
 
 
-        $stage2 = $this->curl( $this->userLogin2Url,null,
+        $stage2 = $this->curl( $this->config['userlogin2_url'],null,
             array(
                 CURLOPT_COOKIEJAR=>true,
                 CURLOPT_POSTFIELDS => $this->params(array(
@@ -161,11 +178,9 @@ class VK_DesktopApi {
         return $userCookieStr;
     }
     private function LoginApp(){
-
-
-        $loginResult = $this->curl($this->loginUrl,
+        $loginResult = $this->curl($this->config['applogin_url'],
             array(
-                'app'=>$this->appId,
+                'app'=>$this->config['app_id'],
                 'layout'=>'popup',
                 'type'=>'browser',
                 'settings'=>$this->GetFullAccessMask()
@@ -177,7 +192,7 @@ class VK_DesktopApi {
         );
 
         if(strstr($loginResult['info']['url'],'login.php')){
-            throw new Exception("User must add proxy app and allow interaction");
+            throw new VK_Exception("User must add proxy app and allow interaction",$loginResult['contents']);
             /* needs figurin out
             $hash = preg_match("/var auth_hash = '([0-9a-fA-F]{18})'/",$loginResult['contents'],$loginHash);
             var_dump($hash);die();
@@ -249,6 +264,7 @@ class VK_DesktopApi {
         if(isset($options[CURLOPT_COOKIEJAR]) && $options[CURLOPT_COOKIEJAR]){
             if(file_exists($options[CURLOPT_COOKIEJAR])){
                 $info['cookiejar'] = file_get_contents($options[CURLOPT_COOKIEJAR]);
+				unlink($options[CURLOPT_COOKIEJAR]);
             }else{
                 throw new Exception("Cookie was demanded, but can't retrive from curl file");
             }
@@ -257,7 +273,9 @@ class VK_DesktopApi {
         $this->op_history[] = $address;//array('request'=>$address,'response'=>$resp);
         return $resp;
     }
-    protected function Params($params) {
+	
+    protected function Params($params)
+	{
         if(!is_array($params)){return $params;}
         
 		$piece = array();

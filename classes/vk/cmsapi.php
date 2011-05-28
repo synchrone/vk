@@ -1,15 +1,38 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 
-class VK_CmsApi extends VK_DesktopApi{
-    public static function Instance(){
-		if ( ! isset(VK_CmsApi::$instance)){
-			$config = Kohana::config('vk.VK_DESKTOP');
-			VK_CmsApi::$instance = new VK_CmsApi($config);
+class VK_CmsApi extends VK_DesktopApi
+{
+	/**
+	 * @static
+	 * @throws Exception
+	 * @param string $config
+	 * @return Vk_CmsApi
+	 */
+    public static function Instance($config='default')
+	{
+
+		if(is_array($config))
+		{
+			$instanceId = $config['user_email'].$config['app_id'];
 		}
-		return VK_CmsApi::$instance;
+		else if(is_string($config) && $cfg_sect = Kohana::config('vk.VK_DESKTOP.'.$config))
+		{
+			$instanceId = $config;
+			$config = $cfg_sect;
+		}
+		else{
+			throw new Exception('$config is not an array or a config section id');
+		}
+
+		if ( ! isset(self::$instance[$instanceId]))
+		{
+			self::$instance[$instanceId] = new self($config);
+		}
+		return self::$instance[$instanceId];
 	}
-    
-    public function photos_getAlbumsWithCovers($p,$debug=false){
+	
+    public function photos_getAlbumsWithCovers($p,$debug=false)
+	{
         $data = $this->Execute('
             var albums = API.photos.getAlbums('.json_encode($p).');
             var covers = API.photos.getById({"photos":'.$this->constructCoverIds().'});
@@ -17,12 +40,13 @@ class VK_CmsApi extends VK_DesktopApi{
         ',$debug);
         for($i=0;$i<count($data['a']);$i++){
             if(!isset($data['covers'][$i])){
-                $data['covers'][$i]['src'] = Kohana::config('vk.site_url').'images/question_100.gif';
+                $data['covers'][$i]['src'] = $this->config['site_url'].'images/question_100.gif';
             }
         }
         return $data;
     }
-    private function constructCoverIds($num=30){
+    private function constructCoverIds($num=30)
+	{
         $covers = array();
         for($i=0;$i<=$num;$i++){
             $covers[] = 'albums['.$i.'].owner_id+"_"+albums['.$i.'].thumb_id';
@@ -30,15 +54,128 @@ class VK_CmsApi extends VK_DesktopApi{
         return implode('+","+',$covers);
     }
 
-    public function photos_getCommentsWithNames($p){
+    public function photos_getCommentsWithNames($p)
+	{
+
         if(!isset($p['count'])){$p['count'] = 30;}
-        return $this->Execute('
-            var comments = API.photos.getComments('.json_encode($p).');
-            var names = API.getProfiles({"uids":'.$this->constructProfileIds($p['count'],'comments').'});
-            return {"c":comments, "n":names};
-        ');
+
+		if(isset($p['owner_id']) && $p['owner_id'] < 0 && isset( $p['pid'])){ //oh my hacky
+			$postEncoded = $this->Params(array(
+				'act' => 'show',
+				'al' => 1,
+				'list' => null,
+				'photo' => $p['owner_id'].'_'.$p['pid']
+			));
+            $response = $this->Curl($this->config['site_url'].'al_photos.php',
+                array(),
+                array(
+                    CURLOPT_POST => true,
+                    CURLOPT_COOKIE =>$this->getUserCookieStr(),
+                    CURLOPT_POSTFIELDS => $postEncoded,
+					CURLOPT_HTTPHEADER => array(
+							//'Accept' => '*/*',
+							/*'Accept-Charset' => 'windows-1251,utf-8;q=0.7,*;q=0.3',
+							'Accept-Encoding' => 'gzip,deflate,sdch',
+							'Accept-Language' => 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
+							'Connection' => 'keep-alive',
+							'Content-Type' => 'application/x-www-form-urlencoded',
+							'Origin' => 'http://vkontakte.ru',
+							'Referer' => 'http://vkontakte.ru/album2600690_122418477',
+							'User-Agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.68 Safari/534.24',
+							'X-Requested-With' => 'XMLHttpRequest',*/
+					)
+				)
+            );
+			$responseUtf = iconv('cp1251','utf8',$response['contents']);
+			$responseArr = explode('<!><!json>',$responseUtf,3);
+			if(count($responseArr) != 3){
+				throw new VK_Exception('Wrong answer',$response);
+			}
+			$responseJson = json_decode($responseArr[1]);
+
+			foreach($responseJson as $photoInfo)
+			{
+				if($photoInfo->id == $p['owner_id'].'_'.$p['pid'])
+				{
+					$response = $this->parseHtmlComments($photoInfo->comments);
+				}
+			}
+		}else
+		{
+			$code = '
+				var comments = API.photos.getComments('.json_encode($p).');
+				var names = API.getProfiles({"uids":'.$this->constructProfileIds($p['count'],'comments',1).'});
+				return {"c":comments, "n":names};
+			';
+			$response = $this->Execute($code);
+			if(!is_array($response['c'])){
+				throw new VK_Exception('couldnt get comments',$code);
+			}
+
+			array_shift($response['c']); //first item is count
+
+			foreach($response['c'] as &$comment){
+				foreach($response['n'] as $name){
+					if($name['uid'] == $comment['from_id']){
+						$comment = array_merge($comment,$name);
+					}
+				}
+			}
+			unset($response['n']);
+			$response = $response['c'];
+		}
+		return $response;
     }
-    private function constructProfileIds($num,$inputVar,$start=0){
+
+	private function parseHtmlComments($html){
+
+		$noko = new Nokogiri($html);
+
+		$commentsNoko = $noko->get('.pv_comment');
+
+		$comments = array();
+
+		foreach($commentsNoko as $node){
+
+			$cid = null;
+			preg_match('/pv_comment([-0-9]+)_([0-9]+)$/u',Arr::path($node,'id',false),$match);
+			if(count($match) > 2){
+				$cid = $match[2];
+			}
+
+			$from_id = null;
+			preg_match('/\/(id)?(.*)$/',Arr::path($node,'div.div.0.a.0.href',false),$match);
+			if(count($match) > 1){
+				$from_id = $match[2];
+			}
+
+			$message = Arr::path($node,'div.div.1.div.0.#text',false);
+
+			$dateHuman = Arr::path($node,'div.div.1.div.1.span.0.#text.0',false);
+			$date = Vk_Date::parse($dateHuman,'%e %h %Y в %H:%M');
+
+			$first_name ='';
+			$last_name = '';
+
+			preg_match('/^(.+) (.+)$/',Arr::path($node,'div.div.1.a.0.#text',false),$match);
+			if(count($match) == 3){
+				$first_name = $match[1];
+				$last_name = $match[2];
+			}
+			$comments[] = array(
+				'cid' => $cid,
+				'from_id' => $from_id,
+				'last_name' => $first_name,
+				'first_name' => $last_name,
+				'date' => $date,
+				'message' => $message
+			);
+		}
+		return array('c'=>$comments);
+	}
+
+    private function constructProfileIds($num,$inputVar,$start=0)
+	{
         $covers = array();
         for($i=$start;$i<=$num;$i++){
             $covers[] = $inputVar.'['.$i.'].from_id';
@@ -47,15 +184,16 @@ class VK_CmsApi extends VK_DesktopApi{
     }
 
 
-    public function video_get($p){
-        $data = array();
-        if((isset($p['uid']) && $p['uid']<0) || isset($p['gid'])){ //megahack
+    public function video_get($p)
+	{
+        if((isset($p['uid']) && $p['uid']<0) || isset($p['gid'])) //either uid<0 (actually a group), or just gid
+		{ //megahack, cuz we can't get group's video
             
             $gid = isset($p['gid']) ? $p['gid'] : $p['uid'] * -1;
             unset($p['gid'],$p['uid']);
 
             $page = $this->Curl(
-                Kohana::config('vk.VK_DESKTOP.site_url').'video.php',
+                $this->config['site_url'].'video.php',
                 array('gid'=>$gid),
                 array(
                     CURLOPT_COOKIE =>$this->getUserCookieStr()
@@ -77,33 +215,13 @@ class VK_CmsApi extends VK_DesktopApi{
         }
         return $data;
     }
-    private function constructVideoIds($ids){
+    private function constructVideoIds($ids)
+	{
         $strIds = array();
         for($i=0;$i<count($ids[0]);$i++){
             $strIds[] = $ids[0][$i].'_'.$ids[1][$i];
         }
         return implode(',',$strIds);
-    }
-
-    public function video_getIframe($id,$hd=1){
-        $page = $this->Curl(
-            Kohana::config('vk.VK_DESKTOP.site_url').'video'.$id, null,
-                array(
-                    CURLOPT_COOKIE =>$this->getUserCookieStr()
-                )
-            );
-        $params = array(
-            'oid'=>$this->findJsonById($page['contents'],'oid'),
-            'id'=>$this->findJsonById($page['contents'],'vid'),
-            'hash'=>$this->findJsonById($page['contents'],'hash2'),
-            'hd'=>$hd
-        );
-        return '<iframe src="'.Kohana::config('vk.VK_DESKTOP.site_url').'video_ext.php?'.$this->Params($params).'" width="607" height="360" frameborder="0"></iframe>';
-        
-    }
-    protected function findJsonById($str,$name){
-        preg_match_all('/"'.$name.'":"([a-zA-Z0-9-_]+)"/imU',$str,$val);
-        return isset($val[1][0]) ? $val[1][0] : false;
     }
 
     public function pages_getNews($gid,$need_html = true){
@@ -113,30 +231,47 @@ class VK_CmsApi extends VK_DesktopApi{
                 return $this->pages_get(array('title'=>$t,'gid'=>$gid,'need_html'=>$need_html ? 1 : 0));
             }catch(VK_Exception $e){}
         }
+		throw new VK_Exception('Cant find news page');
     }
-    public function pages_getWikiSynthax(){
+    public function pages_getWikiSynthax()
+	{
         $data = $this->pages_get(array(
             'title'=>'Описание вики-разметки ВКонтакте','gid'=>55,'need_html'=>1)
         );
         return $data['html'];
     }
 
-    public function wall_getWithNames($p,$debug=false){
+    public function wall_getWithNames($p,$debug=false)
+	{
         if(!isset($p['count'])){$p['count'] = 30;}
         $data = $this->Execute('
             var wall = API.wall.get('.json_encode($p).');
             var names = API.getProfiles({"uids":'.$this->constructProfileIds($p['count'],'wall',1).'});
             return {"w":wall, "n":names};
         ',$debug);
+
         array_shift($data['w']);
-        if(count($data['w'])!=count($data['n'])){
-            foreach($data['n'] as $i=>$name){
+
+        if(count($data['w']) != count($data['n']))
+		{
+            foreach($data['n'] as $i=>$name)
+			{
                 $data['n'][$name['uid']]=$name;
                 unset($data['n'][$i]);
-            } //okay now set names as id=>val
-            foreach($data['w'] as $i=>$post){
-                if(!isset($data['n'][$post['from_id']])){
-                    $data['n'][$post['from_id']]=array('uid'=>$name['uid'],'first_name'=>'','last_name'=>'');
+            }
+
+            //okay now set names as id=>val
+            foreach($data['w'] as $post)
+			{
+				if($post['from_id'] < 0){
+					//ah that was a group!
+					//TODO: put group info there
+					$data['n'][$post['from_id']]=array('uid'=>$post['from_id'],'first_name'=>'','last_name'=>'');
+				}
+				elseif(!isset($data['n'][$post['from_id']])) //no such comment owner id...
+				{
+					//Couldn't find that user
+                    $data['n'][$post['from_id']]=array('uid'=>$post['from_id'],'first_name'=>'','last_name'=>'');
                 }
             }
         }
@@ -164,7 +299,7 @@ class VK_CmsApi extends VK_DesktopApi{
 
         do{
             $postEncoded = $this->Params($postParams);
-            $response = $this->Curl(Kohana::config('vk.VK_DESKTOP.site_url').'al_search.php',
+            $response = $this->Curl($this->config['site_url'].'al_search.php',
                 array(),
                 array(
                     CURLOPT_POST => true,
@@ -223,20 +358,19 @@ class VK_CmsApi extends VK_DesktopApi{
 
         return $chans;
     }
-    protected function get_inner_html( $node ) {
+    protected function get_inner_html(DOMDocument $node ) {
         $innerHTML= '';
         $children = $node->childNodes;
         foreach ($children as $child) {
             $innerHTML .= $child->ownerDocument->saveXML( $child );
         }
-
         return $innerHTML;
     }
 
 
 	public function messages_get($with_id,$offset=-1){
 		$page = $this->Curl(
-			Kohana::config('vk.VK_DESKTOP.site_url').'al_mail.php',
+			$this->config['site_url'].'al_mail.php',
 			array(
 				'act' => 'history',
 				'al' => 1,
@@ -247,7 +381,7 @@ class VK_CmsApi extends VK_DesktopApi{
 				CURLOPT_COOKIE =>$this->getUserCookieStr()
 			)
 		);
-
+		return $page;
 		/*
 		 * $page contents
 		 *

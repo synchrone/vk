@@ -1,11 +1,21 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 
 class Controller_Executor extends Controller {
+	/**
+	 * @var Vk_CmsApi 
+	 */
     private $vk;
     public function action_index()
     {
-        $this->vk = VK_CmsApi::Instance();
         $tpl = View::factory('executor');
+		//get all available cfgs
+		$cfgs = array_keys(Kohana::config('vk.VK_DESKTOP'));
+		$tpl->set('configurations',$cfgs); //populate select
+		$current_cfg = Arr::get($_POST,'configuration',$cfgs[0]);
+		$tpl->set('selected_cfg',$current_cfg);
+
+		$this->vk = VK_CmsApi::Instance($current_cfg);
+
         if(isset($_POST['code'])){
             ob_start();
             try{
@@ -17,10 +27,11 @@ class Controller_Executor extends Controller {
             $tpl->set('out',ob_get_clean())
                 ->set('code',$_POST['code']);
         }else{
-            $tpl->set('code',"\treturn 1;");
+            $tpl->set('code',"return 1;");
         }
 
-        $this->request->response = $tpl;
+
+        $this->response->body($tpl);
     }
 }
 ?>

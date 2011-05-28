@@ -36,6 +36,7 @@ class Nokogiri implements IteratorAggregate{
         $this->_dom = $dom;
     }
     public function loadHtml($htmlString = ''){
+		$htmlString = mb_convert_encoding($htmlString, 'HTML-ENTITIES', mb_detect_encoding($htmlString));
         $dom = new DOMDocument('1.0', 'UTF-8');
         $dom->preserveWhiteSpace = false;
         if (strlen($htmlString)){
