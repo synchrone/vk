@@ -67,11 +67,11 @@
  * @method array audio_edit редактирует аудиозапись пользователя или группы
  * @method array audio_restore восстанавливает удаленную аудиозапись пользователя или группы
  * @method array audio_reorder изменяет порядок аудиозаписи в списке аудиозаписей пользователя
- * @method array audio_getAlbumsnew возвращает альбомы аудиозаписей пользователя или группы
- * @method array audio_addAlbumnew создает альбом аудиозаписей пользователя или группы
- * @method array audio_editAlbumnew изменяет название альбома аудиозаписей пользователя или группы
- * @method array audio_deleteAlbumnew удаляет альбом аудиозаписей пользователя или группы
- * @method array audio_moveToAlbumnew перемещает в альбом аудиозаписи пользователя или группы
+ * @method array audio_getAlbums возвращает альбомы аудиозаписей пользователя или группы
+ * @method array audio_addAlbum создает альбом аудиозаписей пользователя или группы
+ * @method array audio_editAlbum изменяет название альбома аудиозаписей пользователя или группы
+ * @method array audio_deleteAlbum удаляет альбом аудиозаписей пользователя или группы
+ * @method array audio_moveToAlbum перемещает в альбом аудиозаписи пользователя или группы
  *
  * Видеозаписи
  *
@@ -89,11 +89,11 @@
  * @method array video_putTag добавляет отметку на видеозапись
  * @method array video_removeTag удаляет отметку с видеозаписи
  * @method array video_save возвращает данные, необходимые для загрузки видеозаписей, а также данные видеозаписи
- * @method array video_getAlbumsnew возвращает альбомы видеозаписей пользователя или группы
- * @method array video_addAlbumnew создает альбом видеозаписей пользователя или группы
- * @method array video_editAlbumnew изменяет название альбома видеозаписей пользователя или группы
- * @method array video_deleteAlbumnew удаляет альбом видеозаписей пользователя или группы
- * @method array video_moveToAlbumnew перемещает в альбом видеозаписи пользователя или группы
+ * @method array video_getAlbums возвращает альбомы видеозаписей пользователя или группы
+ * @method array video_addAlbum создает альбом видеозаписей пользователя или группы
+ * @method array video_editAlbum изменяет название альбома видеозаписей пользователя или группы
+ * @method array video_deleteAlbum удаляет альбом видеозаписей пользователя или группы
+ * @method array video_moveToAlbum перемещает в альбом видеозаписи пользователя или группы
  *
  * Геолокация
  *
@@ -126,8 +126,8 @@
  * @method array setSMSPrefix - устанавливает префикс для приема SMS
  * @method array getSMSPrefix - возвращает префикс для приема SMS
  * Методы для хранения произвольных данных
- * @method array storage_getnew возвращает значение хранимой переменной
- * @method array storage_setnew сохраняет значение хранимой переменной
+ * @method array storage_get возвращает значение хранимой переменной
+ * @method array storage_set сохраняет значение хранимой переменной
  *
  * Другие методы
  *
@@ -252,7 +252,7 @@
  * @method array photos_getTags возвращает список отметок на фотографии
  * @method array photos_putTag добавляет отметку на фотографию
  * @method array photos_removeTag удаляет отметку с фотографии
- * @method array photos_deleteAlbumnew удаляет фотоальбом пользователя
+ * @method array photos_deleteAlbum удаляет фотоальбом пользователя
  * @method array photos_getMessagesUploadServer возвращает адрес сервера для загрузки фотографии в качестве прикрепления к личному сообщению
  * @method array photos_saveMessagesPhoto сохраняет фотографию после загрузки
  *

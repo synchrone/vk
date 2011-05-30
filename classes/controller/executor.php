@@ -7,7 +7,7 @@ class Controller_Executor extends Controller {
     private $vk;
     public function action_index()
     {
-        $tpl = View::factory('executor');
+        $tpl = new Kohana_View('executor');
 		//get all available cfgs
 		$cfgs = array_keys(Kohana::config('vk.VK_DESKTOP'));
 		$tpl->set('configurations',$cfgs); //populate select

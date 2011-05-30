@@ -1,6 +1,7 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 
 class Vk_Date extends Kohana_Date{
+	public static $format = '%e %h %Y в %H:%M'; //TODO: Russian hardcode
 	public static function parse($datetime,$format,$locale=null)
 	{
 		if(!$locale)
@@ -19,5 +20,9 @@ class Vk_Date extends Kohana_Date{
 
 		return mktime($t['tm_hour'],$t['tm_min'], $t['tm_sec'],
 					  $t['tm_mon']+1, $t['tm_mday'],1900+$t['tm_year']);
+	}
+
+	public static function ts_to_human($timestamp){
+		return strftime(Vk_Date::$format, $timestamp);
 	}
 }

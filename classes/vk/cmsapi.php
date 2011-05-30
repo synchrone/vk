@@ -2,13 +2,16 @@
 
 class VK_CmsApi extends VK_DesktopApi
 {
+
+	static $default_config = 'default';
+
 	/**
 	 * @static
 	 * @throws Exception
 	 * @param string $config
 	 * @return Vk_CmsApi
 	 */
-    public static function Instance($config='default')
+    public static function Instance($config=null)
 	{
 
 		if(is_array($config))
@@ -19,6 +22,11 @@ class VK_CmsApi extends VK_DesktopApi
 		{
 			$instanceId = $config;
 			$config = $cfg_sect;
+		}
+		else if($config == null)
+		{
+			$instanceId = VK_CmsApi::$default_config;
+			$config = Kohana::config('vk.VK_DESKTOP.'.VK_CmsApi::$default_config);
 		}
 		else{
 			throw new Exception('$config is not an array or a config section id');
@@ -152,7 +160,7 @@ class VK_CmsApi extends VK_DesktopApi
 			$message = Arr::path($node,'div.div.1.div.0.#text',false);
 
 			$dateHuman = Arr::path($node,'div.div.1.div.1.span.0.#text.0',false);
-			$date = Vk_Date::parse($dateHuman,'%e %h %Y в %H:%M');
+			$date = Vk_Date::parse($dateHuman,'%e %h %Y в %H:%M'); //TODO: Russian hardcode
 
 			$first_name ='';
 			$last_name = '';
