@@ -91,7 +91,7 @@ class Nokogiri implements IteratorAggregate{
             $id = $subs['id'];
             $attr = $subs['attr'];
             $attrValue = $subs['value'];
-            $class = $subs['class'];
+            $class = isset($subs['class']) ? $subs['class'] : null;
             if (!strlen($tag))
                 $tag = '*';
             $query = '//'.$tag;

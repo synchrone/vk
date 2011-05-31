@@ -70,7 +70,8 @@ class Vk_DesktopApiTest extends Unittest_TestCase
 		return array(
 			array(array(
 				'group_id'      => 22510925, //sandbox'ed
-
+				'group_name'	=> 'sandboxed',
+				
 				'app_id'        => 2055171,
 				'app_secret'    => 'dvKy5EdrPoLSc6P9DdWk',
 
@@ -187,5 +188,16 @@ class Vk_DesktopApiTest extends Unittest_TestCase
 		$this->assertEquals(5,count($comments['w']));
 	}
 
+	/**
+	 * Tests getting group info
+	 * @dataProvider provider_config
+	 * @depends test_login
+	 */
+	public function test_group_getFullInfo($cfg){
+		$vk = VK_CmsApi::Instance($cfg);
+		$vk->group_getFullInfo();
+	}
+
+	
 }
 ?>

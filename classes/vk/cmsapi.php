@@ -429,4 +429,43 @@ class VK_CmsApi extends VK_DesktopApi
 		*/
 		
 	}
+
+	public function group_getFullInfo($params=null){
+		$response = $this->Curl($this->config['site_url'].$this->config['group_name'],
+			array(),
+			array(
+				CURLOPT_COOKIE =>$this->getUserCookieStr()
+			)
+		);
+		$responseUtf = iconv('windows-1251','UTF-8',$response['contents']);
+
+		$noko = new Nokogiri($responseUtf);
+
+
+		/* Info */
+		$ginfo = $noko->get('div.group_info')->toArray();
+		$ginfo = Arr::path($ginfo,'0.div.0.div.1.#text');
+		if(is_array($ginfo))
+		{
+			$ginfo = implode("\n\n",$ginfo);
+		}
+
+		/* Default wikipage */
+		$wiki_defaultpage_link = Arr::path(
+			$noko->get('div.group_wiki_wrap')->toArray(),
+			'0.a.0.href'
+		);
+		preg_match('/p=([\+%0-9A-F+]+)/',$wiki_defaultpage_link,$wikilink_match);
+		if(count($wikilink_match) > 1){
+			$wiki_defaultpage_link = urldecode($wikilink_match[1]);
+		}
+
+		/* Group avatar */
+		$group_avatar = $noko->get('#group_avatar')->toArray();
+		if(!($group_avatar = Arr::path($group_avatar,'0.img.0.src'))){
+			$group_avatar = $this->config['site_url'].'images/no_photo.png';
+		}
+
+		return array('info'=>$ginfo, 'avatar'=>$group_avatar, 'default_wikipage'=>$wiki_defaultpage_link);
+	}
 }
