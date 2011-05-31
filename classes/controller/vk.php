@@ -25,7 +25,7 @@ class Controller_Vk extends Controller {
 		}
 	}
     public function action_xd_receiver(){
-        $this->request->response = new Kohana_View('xd_receiver');
+        $this->request->response = new View('xd_receiver');
     }
 
 } // End Vk
