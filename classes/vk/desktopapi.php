@@ -4,6 +4,7 @@
 class VK_DesktopApi extends Vk_DocumentedApi{
 
 	/*
+	 *  New format: http://vkontakte.ru/developers.php?oid=-1&p=%D0%9F%D1%80%D0%B0%D0%B2%D0%B0_%D0%B4%D0%BE%D1%81%D1%82%D1%83%D0%BF%D0%B0_%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B9
 		Код	Описание
 		+1	Пользователь разрешил отправлять ему уведомления.
 		+2	Доступ к друзьям.
@@ -24,9 +25,7 @@ class VK_DesktopApi extends Vk_DocumentedApi{
         1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192
     );
 
-    private $userCookies;
-    private $appCookies;
-
+    private $appToken;
     private $op_history = array();
     
     // Instances
@@ -40,12 +39,11 @@ class VK_DesktopApi extends Vk_DocumentedApi{
 	 */
     public static function Instance($config='default')
 	{
-
 		if(is_array($config))
 		{
 			$instanceId = $config['user_email'].$config['app_id'];
 		}
-		else if(is_string($config) && $cfg_sect = Kohana::config('vk.VK_DESKTOP.'.$config))
+		else if(is_string($config) && $cfg_sect = Kohana::config('vk.'.$config))
 		{
 			$instanceId = $config;
 			$config = $cfg_sect;
@@ -62,14 +60,11 @@ class VK_DesktopApi extends Vk_DocumentedApi{
 	}
 
 	protected $config;
-	public function __get($name){
-		return $this->config[$name];
-	}
 
     public function __construct(&$config){
 		$this->config = $config;
-        $this->LoginUser($config['user_email'],$config['user_pass']);
-		$this->LoginApp();
+        $code = $this->LoginUser($config['user_email'],$config['user_pass']);
+		$this->LoginApp($code);
     }
     public function __wakeup(){
         $this->op_history = array();
@@ -78,7 +73,7 @@ class VK_DesktopApi extends Vk_DocumentedApi{
         if(strpos($name,'_') > 0){
             $name = str_replace('_','.',$name);
         }
-        return $this->Call($name,count($args) == 1 ? $args[0] : $args);
+        return $this->Call($name,count($args) == 1 ? array($args[0]) : $args);
     }
     public function Execute($code,$debug=false,$testmode=false){
        if($debug){
@@ -93,11 +88,10 @@ class VK_DesktopApi extends Vk_DocumentedApi{
        );
     }
 
-    public function Call($method,$params){
+    public function Call($method, array $params = array()){
         if($this->AppSessionExpired()){
             $this->LoginApp();
         }
-        if (!$params) $params = array();
 		$params['api_id'] = $this->config['app_id'];
         $params['method'] = $method;
         //sig
@@ -137,50 +131,55 @@ class VK_DesktopApi extends Vk_DocumentedApi{
     }
     
     private function LoginUser($email,$password){
-        $stage1 = $this->curl(
-            $this->config['userlogin_url'],
-            null,
-            array(
-                CURLOPT_POSTFIELDS => $this->params(array(
-                        'email' => $email,
-                        'pass' => $password
-                    )
-                )
-            )
-        );
-        preg_match("/name='s' value='([a-fA-F0-9]+)'/",$stage1['contents'],$stage2hash);
-        if(count($stage2hash) != 2){
-            var_dump($stage1);
-            throw new Exception('Wrong user email or password');
-        }
-        $stage2hash = $stage2hash[1];
+        //This gonna get us login form, as no cookies provided
+        $login_page = $this->Curl('https://api.vk.com/oauth/authorize',array(
+            'client_id'=>$this->config['app_id'],
+            'redirect_uri' => 'blank.html',
+            'display' => 'wap',
+            'scope' =>  $this->GetFullAccessMask(),
+            'response_type'=>'code'
+        ),array(CURLOPT_FOLLOWLOCATION => true,CURLOPT_COOKIEJAR=>true));
 
+        $nokopage = Nokogiri::fromHtml($login_page['contents']);
+        $form = $nokopage->get('form')->toArray();
+        $form = $form[0];
 
-        $stage2 = $this->curl( $this->config['userlogin2_url'],null,
-            array(
-                CURLOPT_COOKIEJAR=>true,
-                CURLOPT_POSTFIELDS => $this->params(array(
-                        's' => $stage2hash,
-                        'op' => 'slogin',
-                        'redirect'=>0,
-                        'expire'=>0
-                    )
-                ))
-        );
-        preg_match("/remixsid=([a-fA-F0-9]+);/",$stage2['info']['request_header'],$remixsid);
-        if(count($remixsid) != 2){
-            var_dump($stage2);
-            throw new Exception('Couldnt get remixsid cookie');
+        $params = array();
+        foreach($nokopage->get('form input')->toArray() as $i){
+            $i['name'] = isset($i['name']) ? $i['name'] : '';
+            $i['value'] = isset($i['value']) ? $i['value'] : '';
+            $params[$i['name']] = $i['value'];
         }
-        $this->userCookies =  array('remixsid'=>$remixsid[1]);
-    }
-    protected function getUserCookieStr(){
-        $userCookieStr = '';
-        foreach($this->userCookies as $k=>$v){
-            $userCookieStr .=$k.'='.$v.';';
+        $params['email'] = $email;
+        $params['pass']  = $password;
+
+        $auth_result_form = $this->Curl($form['action'],$params,array(
+            CURLOPT_POST => $form['method'] == 'POST' ? true : false,
+            CURLOPT_COOKIEJAR=>true
+        ));
+
+        if(strpos($auth_result_form['contents'],'Login success')===false){
+            //Stage 2: Granting perms
+            $nokopage = Nokogiri::fromHtml($auth_result_form['contents']);
+            $form = $nokopage->get('form')->toArray();
+            $params = array();
+            foreach($nokopage->get('form input')->toArray() as $i){
+                $params[$i['name']] = $i['value'];
+            }
+
+            $auth_result_form = $this->Curl($form['action'],$params,array(
+                CURLOPT_POST => $form['method'] == 'POST' ? true : false,
+                CURLOPT_COOKIEJAR=>true
+            ));
         }
-        return $userCookieStr;
+        $rurl = $auth_result_form['info']['url'];
+        if(($erroffset = strpos($rurl,'error_description=')) !== false){
+            throw new Exception(substr($rurl,urldecode($erroffset)));
+        }
+        preg_match('/code=([a-zA-Z0-9]+)/',$rurl,$code);
+        return $code[1];
     }
+
     private function LoginApp(){
         $loginResult = $this->curl($this->config['applogin_url'],
             array(
@@ -235,6 +234,11 @@ class VK_DesktopApi extends Vk_DocumentedApi{
     }
 
     protected function Curl($address, $params, $options = null){
+        if(isset($options[CURLOPT_POST]) && $options[CURLOPT_POST] === true){
+            $options[CURLOPT_POSTFIELDS] = $params;
+            $params = array();
+        }
+
         $address .= '?'.$this->Params($params);
 
         //now just init that

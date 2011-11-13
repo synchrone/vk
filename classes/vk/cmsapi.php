@@ -12,30 +12,7 @@ class VK_CmsApi extends VK_DesktopApi
 	 */
     public static function Instance($config=null)
 	{
-
-		if(is_array($config))
-		{
-			$instanceId = $config['user_email'].$config['app_id'];
-		}
-		else if(is_string($config) && $cfg_sect = Kohana::config('vk.VK_DESKTOP.'.$config))
-		{
-			$instanceId = $config;
-			$config = $cfg_sect;
-		}
-		else if($config == null)
-		{
-			$instanceId = VK_CmsApi::$default_config;
-			$config = Kohana::config('vk.VK_DESKTOP.'.VK_CmsApi::$default_config);
-		}
-		else{
-			throw new Exception('$config is not an array or a config section id');
-		}
-
-		if ( ! isset(self::$instance[$instanceId]))
-		{
-			self::$instance[$instanceId] = new self($config);
-		}
-		return self::$instance[$instanceId];
+        return VK_DesktopApi::Instance($config);
 	}
 	
     public function photos_getAlbumsWithCovers($p,$debug=false)

@@ -9,12 +9,12 @@ class Controller_Executor extends Controller {
     {
         $tpl = new View('executor');
 		//get all available cfgs
-		$cfgs = array_keys(Kohana::config('vk.VK_DESKTOP'));
+		$cfgs = array_keys((array)Kohana::config('vk'));
 		$tpl->set('configurations',$cfgs); //populate select
 		$current_cfg = Arr::get($_POST,'configuration',$cfgs[0]);
 		$tpl->set('selected_cfg',$current_cfg);
 
-		$this->vk = VK_CmsApi::Instance($current_cfg);
+		$this->vk = VK_DesktopApi::Instance($current_cfg);
 
         if(isset($_POST['code'])){
             ob_start();
