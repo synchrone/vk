@@ -2,7 +2,6 @@
 
 class VK_CmsApi extends VK_DesktopApi
 {
-
 	static $default_config = 'default';
 
 	/**
@@ -248,6 +247,12 @@ class VK_CmsApi extends VK_DesktopApi
         );
         return $data['html'];
     }
+	public function pages_get($p){
+		if(!isset($p['gid']) && !isset($p['mid'])){
+			$p['gid'] = $this->config['group_id'];
+		}
+		return $this->Call('pages.get',$p);
+	}
 
     public function wall_getWithNames($p,$debug=false)
 	{
@@ -430,8 +435,18 @@ class VK_CmsApi extends VK_DesktopApi
 		
 	}
 
-	public function group_getFullInfo($params=null){
-		$response = $this->Curl($this->config['site_url'].$this->config['group_name'],
+	public function group_getFullInfo($params = array())
+	{
+		if(isset($params['group_name']) && $params['group_name']!=null)
+		{
+			$group_name = $params['group_name'];
+		}
+		else
+		{
+			$group_name = $this->config['group_name'];
+		}
+		
+		$response = $this->Curl($this->config['site_url'].$group_name,
 			array(),
 			array(
 				CURLOPT_COOKIE =>$this->getUserCookieStr()
@@ -442,12 +457,16 @@ class VK_CmsApi extends VK_DesktopApi
 		$noko = new Nokogiri($responseUtf);
 
 
+		/* Name */
+		$gname = $noko->get('div.top_header')->toArray();
+		$gname = Arr::path($gname,'0.#text');
+
 		/* Info */
 		$ginfo = $noko->get('div.group_info')->toArray();
 		$ginfo = Arr::path($ginfo,'0.div.0.div.1.#text');
 		if(is_array($ginfo))
 		{
-			$ginfo = implode("\n\n",$ginfo);
+			$ginfo = implode("<br />",$ginfo);
 		}
 
 		/* Default wikipage */
@@ -455,9 +474,11 @@ class VK_CmsApi extends VK_DesktopApi
 			$noko->get('div.group_wiki_wrap')->toArray(),
 			'0.a.0.href'
 		);
-		preg_match('/p=([\+%0-9A-F+]+)/',$wiki_defaultpage_link,$wikilink_match);
+		$group_id='';
+		preg_match('/o=-([0-9]+)&p=([\+%0-9A-F+]+)/',$wiki_defaultpage_link,$wikilink_match);
 		if(count($wikilink_match) > 1){
-			$wiki_defaultpage_link = urldecode($wikilink_match[1]);
+			$wiki_defaultpage_link = urldecode($wikilink_match[2]);
+			$group_id = $wikilink_match[1];
 		}
 
 		/* Group avatar */
@@ -466,6 +487,30 @@ class VK_CmsApi extends VK_DesktopApi
 			$group_avatar = $this->config['site_url'].'images/no_photo.png';
 		}
 
-		return array('info'=>$ginfo, 'avatar'=>$group_avatar, 'default_wikipage'=>$wiki_defaultpage_link);
+		return array(
+			'name'	=>	$gname,
+			'id'	=>	$group_id,
+			'info'	=>	$ginfo,
+			'avatar'=>	$group_avatar,
+			'default_wikipage'=>$wiki_defaultpage_link,
+		);
+	}
+	
+	/**
+	 * @static
+	 * @param  $seconds Seconds to transform
+	 * @return string time in minutes
+	 */
+	public static function duration($seconds){
+		$time = '';
+		if($seconds > 3600){
+			$time .= round($seconds/3600,0).':';
+		}
+		if($seconds > 60){
+			$time .= round($seconds/60,0).':';
+		}
+		$time .= $seconds % 60;
+		
+		return $time;
 	}
 }

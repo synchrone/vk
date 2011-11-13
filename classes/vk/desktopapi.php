@@ -62,6 +62,10 @@ class VK_DesktopApi extends Vk_DocumentedApi{
 	}
 
 	protected $config;
+	public function __get($name){
+		return $this->config[$name];
+	}
+
     public function __construct(&$config){
 		$this->config = $config;
         $this->LoginUser($config['user_email'],$config['user_pass']);

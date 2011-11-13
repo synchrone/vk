@@ -9,23 +9,25 @@ class Controller_Vk extends Controller {
 		{
 			if (Vk_Auth::instance()->login())
 			{
-				Request::instance()->redirect('/vk');
+				$this->request->redirect('/vk');
 			}
 		}
-		$this->request->response = View::factory('vk')
-			->set('config', Vk_Auth::instance()->get_config())
-			->set('user', $user);
+		$this->response->body(
+			View::factory('vk')
+				->set('config', Vk_Auth::instance()->get_config())
+				->set('user', $user)
+		);
 	}
 
 	public function action_logout()
 	{
 		if (Vk_Auth::instance()->logout())
 		{
-			Request::instance()->redirect('/vk');
+			$this->request->redirect('/vk');
 		}
 	}
     public function action_xd_receiver(){
-        $this->request->response = new View('xd_receiver');
+        $this->response->body(new View('xd_receiver'));
     }
 
 } // End Vk
