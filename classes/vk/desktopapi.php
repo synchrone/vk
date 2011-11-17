@@ -70,6 +70,14 @@ class VK_DesktopApi extends Vk_DocumentedApi{
         return $this->Call($name,count($args) == 1 ? array($args[0]) : $args);
     }
 
+    public function GeneratePHPDoc(){
+        $apidoc = $this->pages_get(array('gid'=>1,'title'=>"Описание методов API"));
+        $updated = $apidoc['edited'];
+        $apidoc = $apidoc['source'];
+        //TODO: Parse * gen phpdoc
+
+    }
+
     public function Execute($code,$debug=false,$testmode=false){
        if($debug){
            var_dump($code);
