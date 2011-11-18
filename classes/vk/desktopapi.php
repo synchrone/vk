@@ -67,7 +67,7 @@ class VK_DesktopApi extends Vk_DocumentedApi{
         if(strpos($name,'_') > 0){
             $name = str_replace('_','.',$name);
         }
-        return $this->Call($name,count($args) == 1 ? array($args[0]) : $args);
+        return $this->Call($name,count($args) == 1 ? $args[0] : $args);
     }
 
     public function GeneratePHPDoc(){
