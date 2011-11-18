@@ -147,6 +147,9 @@ class VK_DesktopApi extends Vk_DocumentedApi{
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_COOKIE => $last_request['cookie']
         ));
+        if(strpos($last_request['contents'],'неверный логин')!==false){
+            throw new Exception('Wrong auth data');
+        }
 
         if(strpos($last_request['contents'],'Login success')===false){
             //Stage 2: Granting perms
@@ -168,7 +171,6 @@ class VK_DesktopApi extends Vk_DocumentedApi{
                 CURLOPT_COOKIE => $last_request['cookie']
             ));
         }
-
 
         $rurl = end($last_request['info']);
         $rurl=$rurl['url'];

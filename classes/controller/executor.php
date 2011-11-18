@@ -21,7 +21,7 @@ class Controller_Executor extends Controller {
             try{
                 print_r($this->vk->Execute($_POST['code']));
             }catch(Exception $e){
-                echo "<b>".$e->getMessage()."</b>";
+                echo "<b>".$e."</b>";
             }
 
             $tpl->set('out',ob_get_clean())
