@@ -4,17 +4,6 @@ class VK_CmsApi extends VK_DesktopApi
 {
 	static $default_config = 'default';
 
-	/**
-	 * @static
-	 * @throws Exception
-	 * @param string $config
-	 * @return Vk_CmsApi
-	 */
-    public static function Instance($config=null)
-	{
-        return VK_DesktopApi::Instance($config);
-	}
-	
     public function photos_getAlbumsWithCovers($p,$debug=false)
 	{
         $data = $this->Execute('
