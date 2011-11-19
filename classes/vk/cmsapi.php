@@ -4,6 +4,24 @@ class VK_CmsApi extends VK_DesktopApi
 {
 	static $default_config = 'default';
 
+    public function wall_uploadImage($filename,$giduid=array()){
+        $uploadURL = $this->photos_getWallUploadServer($giduid);
+        $uploaded_image = $this->Curl($uploadURL['upload_url'],null,array(
+            CURLOPT_POST=>1,
+            CURLOPT_POSTFIELDS=>array('photo'=>'@'.$filename)
+        ));
+        $uimage = (array)json_decode($uploaded_image['contents']);
+
+        $uimage = array_merge(
+                      array('server'=>$uimage['server'],
+                            'photo'=>$uimage['photo'],
+                            'hash'=>$uimage['hash']),
+                      $giduid
+                    );
+        $response = $this->photos_saveWallPhoto($uimage);
+        return $response[0];
+    }
+
     public function photos_getAlbumsWithCovers($p,$debug=false)
 	{
         $data = $this->Execute('
