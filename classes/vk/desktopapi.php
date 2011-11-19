@@ -156,6 +156,9 @@ class VK_DesktopApi extends Vk_DocumentedApi{
             //Stage 2: Granting perms
             $nokopage = Nokogiri::fromHtml($last_request['contents']);
             $form = $nokopage->get('form')->toArray();
+            if(!isset($form[0])){
+                throw new Exception('No forms on stage 2 html',$last_request['contents']);
+            }
             $form = $form[0];
             if(substr($form['action'],0,4) != 'http'){$form['action'] = 'http://api.vk.com'.$form['action'];}
 
