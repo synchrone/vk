@@ -47,10 +47,11 @@ class VK_DesktopApi extends Vk_DocumentedApi{
 		else{
 			throw new Exception('$config is not an array or a config section id');
 		}
-
+        $classname = get_called_class();
 		if ( ! isset(self::$instance[$instanceId]))
 		{
-			self::$instance[$instanceId] = new self($config);
+
+			self::$instance[$instanceId] = new $classname($config);
 		}
 		return self::$instance[$instanceId];
 	}
