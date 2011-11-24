@@ -21,10 +21,8 @@ class VK_DesktopApi extends Vk_DocumentedApi{
         'offline'	//Доступ к API в любое время со стороннего сервера.
     );
 
-    private $appToken;
     private $op_history = array();
-    
-    // Instances
+    protected $config;
 	protected static $instance;
 	
 	/**
@@ -37,7 +35,7 @@ class VK_DesktopApi extends Vk_DocumentedApi{
 	{
 		if(is_array($config))
 		{
-			$instanceId = $config['user_email'].$config['app_id'];
+			$instanceId = sha1(serialize($config));
 		}
 		else if(is_string($config) && $cfg_sect = Kohana::config('vk.'.$config))
 		{
@@ -55,8 +53,6 @@ class VK_DesktopApi extends Vk_DocumentedApi{
 		}
 		return self::$instance[$instanceId];
 	}
-
-	protected $config;
 
     public function __construct(&$config){
 		$this->config = $config;
@@ -93,8 +89,7 @@ class VK_DesktopApi extends Vk_DocumentedApi{
     }
 
     public function Call($method, array $params = array()){
-        $this->LoginApp();
-        $params['access_token'] = $this->appToken['access_token'];
+        $params['access_token'] = $this->LoginApp();
 		$query = $this->curl('https://api.vk.com/method/'.$method,$params);
 		$res = (array)json_decode($query['contents'], true);
 
@@ -187,17 +182,18 @@ class VK_DesktopApi extends Vk_DocumentedApi{
 
     /**
      * @param string $code App auth code returned by user
-     * @return void
+     * @return string VK API Token
      * @throws Exception
      */
     private function LoginApp($code = null){
-        if($this->appToken !== null && //authd
-                $this->appToken['access_token'] !== null && //got a token
-                ($this->appToken['expire_time'] != -1 || //infinite
-                $this->appToken['expire_time'] < time()) //or not expired
+        if($this->config['token'] !== null && //authd
+                $this->config['token']['access_token'] !== null && //got a token
+                ($this->config['token']['expire_time'] != -1 || //infinite
+                $this->config['token']['expire_time'] < time()) //or not expired
         ){
-            return;
+            return $this->config['token']['access_token'];
         }
+
         if($code === null){
             $code = $this->LoginUser();
         }
@@ -213,7 +209,8 @@ class VK_DesktopApi extends Vk_DocumentedApi{
         if($token['expires_in'] > 0){ $token['expire_time'] = time() + $token['expires_in']; }else{
             $token['expire_time'] = -1;
         }
-        $this->appToken = $token;
+        $this->config['token'] = $token;
+        return $token['access_token'];
     }
 
     private function GetFullAccessMask(){
