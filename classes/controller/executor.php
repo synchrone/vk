@@ -14,7 +14,9 @@ class Controller_Executor extends Controller {
 		$current_cfg = Arr::get($_POST,'configuration',$cfgs[0]);
 		$tpl->set('selected_cfg',$current_cfg);
 
-		$this->vk = VK_DesktopApi::Instance($current_cfg);
+        $this->vk = VK_DesktopApi::Instance($current_cfg);
+
+
 
         if(isset($_POST['code'])){
             ob_start();
@@ -27,7 +29,8 @@ class Controller_Executor extends Controller {
             $tpl->set('out',ob_get_clean())
                 ->set('code',$_POST['code']);
         }else{
-            $tpl->set('code',"return 1;");
+            $tpl->set('code','return API.pages.get({gid:1,title:"Описание методов API"});')
+                ->set('out',$this->vk->GeneratePHPDoc());
         }
 
 

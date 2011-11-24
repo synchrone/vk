@@ -71,8 +71,31 @@ class VK_DesktopApi extends Vk_DocumentedApi{
         $apidoc = $this->pages_get(array('gid'=>1,'title'=>"Описание методов API"));
         $updated = $apidoc['edited'];
         $apidoc = $apidoc['source'];
-        //TODO: Parse * gen phpdoc
+        $doc = "/**\n".
+                " * @version $updated\n".
+                " */\n".
+                "abstract class Vk_DocumentedApi {\n\n".
+                    "\tabstract function Call(\$name, array \$p);\n\n"
+        ;
 
+
+        preg_match_all('/\[\[([a-zA-Z\.]+)\]\] – (.*)<br>/imsU',$apidoc,$methods,PREG_SET_ORDER);
+
+
+        foreach($methods as $meth){
+            $doc .= sprintf(
+                    "\t/**\n".
+                    "\t * %s\n".
+                    "\t * @param \$p array Function arguments\n".
+                    "\t * @return array\n".
+                    "\t */\n".
+                    "\tpublic function %s(array \$p){\n".
+                        "\t\treturn \$this->Call('%s',\$p);\n".
+                    "\t}\n\n",$meth[2], str_replace('.','_',$meth[1]), $meth[1]);
+
+        }
+        $doc.='}';
+        return $doc;
     }
 
     public function Execute($code,$debug=false,$testmode=false){
