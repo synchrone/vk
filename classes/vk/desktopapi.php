@@ -186,10 +186,13 @@ class VK_DesktopApi extends Vk_DocumentedApi{
      * @throws Exception
      */
     private function LoginApp($code = null){
-        if($this->config['token'] !== null && //authd
+        if(isset($this->config['token']) && //authd
+                is_array($this->config['token']) &&
                 $this->config['token']['access_token'] !== null && //got a token
-                ($this->config['token']['expire_time'] != -1 || //infinite
-                $this->config['token']['expire_time'] < time()) //or not expired
+                (
+                    $this->config['token']['expire_time'] != -1 || //infinite
+                    $this->config['token']['expire_time'] < time() //or not expired
+                )
         ){
             return $this->config['token']['access_token'];
         }
