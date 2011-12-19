@@ -128,7 +128,7 @@ class VK_DesktopApi extends Vk_DocumentedApi{
                  throw new VK_Exception('Error: '.$res['error']['error_code'].' - '.$res['error']['error_msg'],$e_data);
             }
 
-            throw new Exception($e_data,'Unknown response');
+            throw new Exception('Unknown response'."\n".$e_data);
         }
 		return $res['response'];
     }
