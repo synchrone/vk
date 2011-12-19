@@ -113,7 +113,7 @@ class VK_DesktopApi extends Vk_DocumentedApi{
 
     public function Call($method, array $params = array()){
         $params['access_token'] = $this->LoginApp();
-		$query = $this->curl('https://api.vk.com/method/'.$method,$params);
+		$query = $this->curl('https://api.vk.com/method/'.$method,$params,array(CURLOPT_POST=>true));
 		$res = (array)json_decode($query['contents'], true);
 
         if(!isset($res['response'])){
