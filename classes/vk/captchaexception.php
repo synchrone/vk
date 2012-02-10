@@ -10,8 +10,17 @@ class VK_CaptchaException extends Exception {
     }
 
     public function __toString(){
-        $params = array();
+        $msg = 'A captcha response query is needed: '.
+            sprintf('%s&captcha_sid=%s&captcha_key=<human typed text from %s>',
+                $this->getFailedCallUrl(),
+                $this->getSid(),
+                $this->getImgURL()
+            );
+        return $msg;
+    }
 
+    public function getFailedCallUrl(){
+        $params = array();
         foreach($this->error['request_params'] as $param){
             if($param['key'] == 'method'){continue;}
             $params[] = sprintf('%s=%s',urlencode($param['key']),urlencode($param['value']));
@@ -19,12 +28,13 @@ class VK_CaptchaException extends Exception {
         $url = $this->request_info[count($this->request_info)-1]['url'].'?'.
             implode('&',$params);
 
-        $msg = 'A captcha response query is needed: '.
-            sprintf('%s&captcha_sid=%s&captcha_key=<human typed text from %s>',
-                $url,
-                $this->error['captcha_sid'],
-                $this->error['captcha_img']
-            );
-        return $msg;
+        return $url;
+    }
+
+    public function getSid(){
+        return $this->error['captcha_sid'];
+    }
+    public function getImgURL(){
+        return $this->error['captcha_img'];
     }
 }
