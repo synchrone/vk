@@ -123,6 +123,10 @@ class VK_DesktopApi extends Vk_DocumentedApi{
 				echo "<h4>Request history:</h4>";
 				var_dump($this->op_history);
             $e_data = ob_get_clean();
+
+            if($res['error']['error_code'] == 14){
+                throw new VK_CaptchaException($query['info'],$res['error']);
+            }
 			
             if(isset($res['error'])){
                  throw new VK_Exception('Error: '.$res['error']['error_code'].' - '.$res['error']['error_msg'],$e_data);
@@ -208,7 +212,7 @@ class VK_DesktopApi extends Vk_DocumentedApi{
      * @return string VK API Token
      * @throws Exception
      */
-    private function LoginApp($code = null){
+    public function LoginApp($code = null){
         if(isset($this->config['token']) && //authd
                 is_array($this->config['token']) &&
                 $this->config['token']['access_token'] !== null && //got a token

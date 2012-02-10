@@ -4,7 +4,7 @@
  */
 abstract class Vk_DocumentedApi {
 
-	abstract function Call($name, array $p);
+	abstract function Call($name, array $p = array());
 
 	/**
 	 * возвращает информацию о том, установил ли пользователь данное приложение.

@@ -10,6 +10,6 @@ class VK_Exception extends Exception{
         return $this->ainfo;
     }
     public function __toString() {
-        return "exception '".__CLASS__ ."' with message '".$this->getMessage()."' in ".$this->getFile().":".$this->getLine()."\nStack trace:\n".$this->getTraceAsString();
+        return $this->getMessage();
     }
 }
