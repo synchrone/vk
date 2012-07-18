@@ -3,12 +3,12 @@
 /**
  * Auth module for Open API vk.com
  *
- * @package    Vk_Auth
+ * @package    VK_Auth
  * @author     Viacheslav Radionov
  * @copyright  (c) 2010 Viacheslav Radionov <radionov@gmail.com>
  * @license    http://kohanaphp.com/license.html
  */
-class Vk_Auth {
+class VK_Auth {
 
 	// Instances
 	protected static $instance;
@@ -16,20 +16,20 @@ class Vk_Auth {
 	/**
 	 * Singleton pattern
 	 *
-	 * @return Vk_Auth
+	 * @return VK_Auth
 	 */
 	public static function instance()
 	{
-		if ( ! isset(Vk_Auth::$instance))
+		if ( ! isset(VK_Auth::$instance))
 		{
 			// Load the configuration for this type
 			$config = Kohana::config('vk');
 
 			// Create a new session instance
-			Vk_Auth::$instance = new Vk_Auth($config);
+			VK_Auth::$instance = new VK_Auth($config);
 		}
 
-		return Vk_Auth::$instance;
+		return VK_Auth::$instance;
 	}
 
 	protected $config;
@@ -181,4 +181,4 @@ class Vk_Auth {
 		return $this->config;
 	}
 
-} // End Vk_Auth
+} // End VK_Auth

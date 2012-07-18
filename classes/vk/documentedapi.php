@@ -2,7 +2,7 @@
 /**
  * @version 2011-10-17 14:53:35
  */
-abstract class Vk_DocumentedApi {
+abstract class VK_DocumentedApi {
 
 	abstract function Call($name, array $p = array());
 

@@ -1,7 +1,7 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 
 
-class VK_DesktopApi extends Vk_DocumentedApi{
+class VK_DesktopApi extends VK_DocumentedApi{
 
     private $accessLevels = array(
         //'notify', //Пользователь разрешил отправлять ему уведомления.
@@ -31,8 +31,10 @@ class VK_DesktopApi extends Vk_DocumentedApi{
 	 * @param string $config
 	 * @return VK_DesktopApi
 	 */
-    public static function Instance($config='default')
+    public static function Instance($config=null)
 	{
+        $config = $config !== null ? $config : 'default';
+
 		if(is_array($config))
 		{
 			$instanceId = sha1(serialize($config));
@@ -67,36 +69,7 @@ class VK_DesktopApi extends Vk_DocumentedApi{
         return $this->Call($name,count($args) == 1 ? $args[0] : $args);
     }
 
-    public function GeneratePHPDoc(){
-        $apidoc = $this->pages_get(array('gid'=>1,'title'=>"Описание методов API"));
-        $updated = $apidoc['edited'];
-        $apidoc = $apidoc['source'];
-        $doc = "/**\n".
-                " * @version $updated\n".
-                " */\n".
-                "abstract class Vk_DocumentedApi {\n\n".
-                    "\tabstract function Call(\$name, array \$p);\n\n"
-        ;
 
-
-        preg_match_all('/\[\[([a-zA-Z\.]+)\]\] – (.*)<br>/imsU',$apidoc,$methods,PREG_SET_ORDER);
-
-
-        foreach($methods as $meth){
-            $doc .= sprintf(
-                    "\t/**\n".
-                    "\t * %s\n".
-                    "\t * @param \$p array Function arguments\n".
-                    "\t * @return array\n".
-                    "\t */\n".
-                    "\tpublic function %s(array \$p){\n".
-                        "\t\treturn \$this->Call('%s',\$p);\n".
-                    "\t}\n\n",$meth[2], str_replace('.','_',$meth[1]), $meth[1]);
-
-        }
-        $doc.='}';
-        return $doc;
-    }
 
     public function Execute($code,$debug=false,$testmode=false){
        if($debug){
@@ -150,6 +123,9 @@ class VK_DesktopApi extends Vk_DocumentedApi{
             'scope' =>  $this->GetFullAccessMask(),
             'response_type'=>'code'
         ),array(CURLOPT_FOLLOWLOCATION => true, CURLOPT_COOKIESESSION => true));
+
+        $last_request_info = end($last_request['info']);
+        if($last_request_info['http_code'] != 200){throw new VK_Exception('Cannot get user auth form',$last_request);}
 
         $nokopage = Nokogiri::fromHtml($last_request['contents']);
         $form = $nokopage->get('form')->toArray();
@@ -325,7 +301,7 @@ class VK_DesktopApi extends Vk_DocumentedApi{
 
             $cookies = array();
             //covering the cookies we had
-            if(isset($options[CURLOPT_COOKIE])){
+            if(isset($options[CURLOPT_COOKIE]) && strlen($options[CURLOPT_COOKIE]) > 0){
                 foreach(explode('; ',$options[CURLOPT_COOKIE]) as $cookie){
                     $cookie = explode('=',$cookie);
                     $cookies[$cookie[0]] = $cookie[1];

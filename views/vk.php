@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
-	<title>Vk_Auth</title>
+	<title>VK_Auth</title>
 </head>
 <body>
 

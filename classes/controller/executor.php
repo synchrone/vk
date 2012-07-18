@@ -2,7 +2,7 @@
 
 class Controller_Executor extends Controller {
 	/**
-	 * @var Vk_CmsApi 
+	 * @var VK_CmsApi
 	 */
     private $vk;
     public function action_index()

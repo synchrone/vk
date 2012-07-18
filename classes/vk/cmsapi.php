@@ -143,7 +143,7 @@ class VK_CmsApi extends VK_DesktopApi
 			$message = Arr::path($node,'div.div.1.div.0.#text',false);
 
 			$dateHuman = Arr::path($node,'div.div.1.div.1.span.0.#text.0',false);
-			$date = Vk_Date::parse($dateHuman,'%e %h %Y в %H:%M'); //TODO: Russian hardcode
+			$date = VK_Date::parse($dateHuman,'%e %h %Y в %H:%M'); //TODO: Russian hardcode
 
 			$first_name ='';
 			$last_name = '';
@@ -175,7 +175,7 @@ class VK_CmsApi extends VK_DesktopApi
     }
 
 
-    public function video_get($p)
+    public function video_get(array $p)
 	{
         if((isset($p['uid']) && $p['uid']<0) || isset($p['gid'])) //either uid<0 (actually a group), or just gid
 		{ //megahack, cuz we can't get group's video
@@ -231,7 +231,7 @@ class VK_CmsApi extends VK_DesktopApi
         );
         return $data['html'];
     }
-	public function pages_get($p){
+	public function pages_get(array $p){
 		if(!isset($p['gid']) && !isset($p['mid'])){
 			$p['gid'] = $this->config['group_id'];
 		}

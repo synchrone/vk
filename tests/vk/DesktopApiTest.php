@@ -1,11 +1,11 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 
 /**
- * Tests the Vkcms module
+ * Tests the VKcms module
  *
  * @group vk
  *
- * @package    Vk
+ * @package    VK
  * @category   Desktop
  * @author     syn
  * @license    http://kohanaframework.org/license
@@ -47,7 +47,7 @@
  * @method assertXmlStringEqualsXmlFile
  * @method assertXmlStringEqualsXmlString
  */
-class Vk_DesktopApiTest extends Unittest_TestCase
+class VK_DesktopApiTest extends Unittest_TestCase
 {
 
 	/**
@@ -147,7 +147,7 @@ class Vk_DesktopApiTest extends Unittest_TestCase
 	}
 
 	public function test_timeparsing(){
-		$timestamp = Vk_Date::parse('26 мая 2011 в 18:00','%e %h %Y в %H:%M');
+		$timestamp = VK_Date::parse('26 мая 2011 в 18:00','%e %h %Y в %H:%M');
 		if(!$timestamp){
 			throw new Exception('Cant parse local date');
 		}
