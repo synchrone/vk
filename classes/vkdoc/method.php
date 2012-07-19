@@ -105,6 +105,7 @@ class VKDoc_Method
     }
 
     public function get_return_class(){
+        //TODO: @properties
         return 'class '.$this->get_return_classname().' extends VKDoc_ReturnValue {}';
     }
 
