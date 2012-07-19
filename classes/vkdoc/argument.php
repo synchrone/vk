@@ -6,24 +6,19 @@
  * @author     syn
  * @copyright  (c) 2012 syn
  */
-class VKDoc_Argument{
+class VKDoc_Argument
+{
     public $name;
     public $type;
     public $optional;
     public $description;
 
-    public function __construct($description){
-        $params = explode('||',$description);
-        if(count($params) != 3){ //TODO: figure out wikitable synthax
-            $params = explode('|',$description);
-        }
-
-        $this->name = preg_replace('/[^a-zA-Z0-9]/','',trim($params[0])); // there are cases ...
+    public function __construct($params){
+        $this->name = preg_replace('/[^a-zA-Z0-9]/','',trim($params['name'])); // there are cases ...
         $this->name = str_replace('с','c',$this->name);//TODO: russian [эс] to c hack!
-        $this->optional = trim($params[1]) !== '' ? false : true;
-        $this->description = str_replace("'''","'",trim($params[2]));
+        $this->optional = trim($params['optional']) !== '' ? false : true;
+        $this->description = str_replace("'''","'",trim($params['description']));
     }
-
 
     public function signature_style(){
         return sprintf('%s$%s%s',

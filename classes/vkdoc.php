@@ -9,29 +9,50 @@
 class VKDoc
 {
     public static $config = 'default';
+    protected $_methods;
+    /** @var DateTime */
+    protected $_last_modified;
 
-    public static function generate(){
+
+    public function __construct(){
         $vk = VK_DesktopApi::Instance(self::$config);
-        $apidoc = $vk->pages_get(array('gid'=>1,'title'=>"Описание методов API"));
-        $methods = self::parse_methods($apidoc['source']);
-        $extended_api = $vk->pages_get(array('gid'=>1,'title'=>'Расширенные методы API'));
+
+        $api = $vk->Call('pages.get',array('gid'=>1,'title'=>"Описание методов API"));
+        $api['edited'] = new DateTime($api['edited']);
+        $methods = self::parse_methods($api['source']);
+
+        $extended_api = $vk->Call('pages.get',array('gid'=>1,'title'=>'Расширенные методы API'));
+        $extended_api['edited'] = new DateTime($extended_api['edited']);
         $extended_methods = self::parse_methods($extended_api['source']);
+
+        $this->_last_modified = max($api['edited'],$extended_api['edited']);
+        $this->_methods = array_merge($methods,$extended_methods);
+    }
+
+    public function generate(){
+        $methods = $this->get_methods();
 
         $doc = sprintf(
             "/**\n".
             " * @version %s\n".
             " */\n".
-            "abstract class VK_DocumentedApi {\n\n".
-                "\tabstract function Call(\$name, array \$p);\n\n",
-            $apidoc['edited']
+            "abstract class VKDoc_Api_Full {\n\n".
+                "\tabstract function Call(\$name, array \$p = array());\n\n",
+            $this->get_last_modified()->format('Y-m-d H:i:s')
         );
 
-        $methods = array_merge($methods,$extended_methods);
-        foreach($methods as /** @var VKDoc_Method */ $method){
+        foreach($this->get_methods() as /** @var VKDoc_Method */ $method){
             $doc.=(string)$method;
         }
         $doc.='}';
         return $doc;
+    }
+    public function get_last_modified(){
+        return $this->_last_modified;
+    }
+
+    public function get_methods(){
+        return $this->_methods;
     }
 
     public static function get_doc($method){
