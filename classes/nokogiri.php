@@ -1,5 +1,5 @@
 <?php
-
+if(!class_exists('Nokogiri')){
 /**
  * Description of nokogiri
  *
@@ -171,3 +171,4 @@ class Nokogiri implements IteratorAggregate{
     }
 }
 
+}

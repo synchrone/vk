@@ -30,7 +30,7 @@ class Controller_Executor extends Controller {
                 ->set('code',$_POST['code']);
         }else{
             $tpl->set('code','return API.pages.get({gid:1,title:"Описание методов API"});')
-                ->set('out',$this->vk->GeneratePHPDoc());
+                ->set('out','');
         }
 
 

@@ -1,7 +1,7 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 
 
-class VK_DesktopApi extends VK_DocumentedApi{
+class VK_DesktopApi extends VK_Api{
 
     private $accessLevels = array(
         //'notify', //Пользователь разрешил отправлять ему уведомления.
@@ -98,7 +98,7 @@ class VK_DesktopApi extends VK_DocumentedApi{
             $e_data = ob_get_clean();
 
             if($res['error']['error_code'] == 14){
-                throw new VK_CaptchaException($query['info'],$res['error']);
+                throw new VK_Exception_Captcha($query['info'],$res['error']);
             }
 			
             if(isset($res['error'])){

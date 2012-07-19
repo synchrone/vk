@@ -2,8 +2,10 @@
 
 class VK_Date extends Kohana_Date{
 	public static $format = '%e %h %Y в %H:%M'; //TODO: Russian hardcode
-	public static function parse($datetime,$format,$locale=null)
+	public static function parse($datetime,$format=null,$locale=null)
 	{
+        if($format === null){$format = self::$format;}
+
 		if(!$locale)
 		{
 			$t = strptime($datetime,$format);
@@ -15,7 +17,7 @@ class VK_Date extends Kohana_Date{
 		}
 
 		if($t['unparsed'] != ''){
-			throw new DateTimeException('Couldnt parse all the time',null,null,$t);
+			throw new VK_Exception('Couldnt parse all the time',null,null,$t);
 		}
 
 		return mktime($t['tm_hour'],$t['tm_min'], $t['tm_sec'],
