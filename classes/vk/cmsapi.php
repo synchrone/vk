@@ -143,7 +143,7 @@ class VK_CmsApi extends VK_DesktopApi
 			$message = Arr::path($node,'div.div.1.div.0.#text',false);
 
 			$dateHuman = Arr::path($node,'div.div.1.div.1.span.0.#text.0',false);
-			$date = VK_Date::parse($dateHuman,'%e %h %Y в %H:%M'); //TODO: Russian hardcode
+			$date = VK_Date::parse($dateHuman);
 
 			$first_name ='';
 			$last_name = '';
