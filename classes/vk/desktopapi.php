@@ -147,7 +147,7 @@ class VK_DesktopApi extends VK_Api{
             CURLOPT_COOKIE => $last_request['cookie']
         ));
         if(strpos($last_request['contents'],'неверный логин')!==false){
-            throw new Exception('Wrong auth data');
+            throw new VK_Exception('Wrong auth data',$last_request);
         }
 
         if(strpos($last_request['contents'],'Login success')===false){
@@ -155,7 +155,7 @@ class VK_DesktopApi extends VK_Api{
             $nokopage = Nokogiri::fromHtml($last_request['contents']);
             $form = $nokopage->get('form')->toArray();
             if(!isset($form[0])){
-                throw new Exception('No forms on stage 2 html',$last_request['contents']);
+                throw new VK_Exception('No forms on stage 2 html',$last_request);
             }
             $form = $form[0];
             if(substr($form['action'],0,4) != 'http'){$form['action'] = 'http://api.vk.com'.$form['action'];}
@@ -177,7 +177,7 @@ class VK_DesktopApi extends VK_Api{
         $rurl = end($last_request['info']);
         $rurl=$rurl['url'];
         if(($erroffset = strpos($rurl,'error_description=')) !== false){
-            throw new Exception(substr($rurl,urldecode($erroffset)));
+            throw new VK_Exception(substr($rurl,urldecode($erroffset)),$last_request);
         }
         preg_match('/code=([a-zA-Z0-9]+)/',$rurl,$code);
         return $code[1];
@@ -210,7 +210,7 @@ class VK_DesktopApi extends VK_Api{
         ));
         $token = json_decode($token['contents'],true);
         if(isset($token['error'])){
-            throw new Exception($token['error_description'],$token['error']);
+            throw new VK_Exception($token['error_description'],$token['error']);
         }
         if($token['expires_in'] > 0){ $token['expire_time'] = time() + $token['expires_in']; }else{
             $token['expire_time'] = -1;
