@@ -2,8 +2,7 @@
 /**
  * @version 2011-10-17 14:53:35
  */
-abstract class VK_DocumentedApi {
-
+abstract class VKDoc_Api_Legacy {
 	abstract function Call($name, array $p = array());
 
 	/**
