@@ -69,8 +69,13 @@ class VK_DesktopApi extends VK_Api{
         return $this->Call($name,count($args) == 1 ? $args[0] : $args);
     }
 
-
-
+    /**
+     * @param string $path access_token, expires_in, user_id or expire_time
+     * @return mixed
+     */
+    public function GetToken($path='access_token'){
+        return Arr::path($this->config['token'],$path);
+    }
     public function Execute($code,$debug=false,$testmode=false){
        if($debug){
            var_dump($code);
@@ -115,14 +120,11 @@ class VK_DesktopApi extends VK_Api{
      * @throws Exception
      */
     private function LoginUser(){
+        list($login_url,$params) = $this->GetUserLoginUrl('blank.html', true);
+        $params['display'] = 'wap';
+
         //This gonna get us login form, as no cookies provided
-        $last_request = $this->Curl('https://api.vk.com/oauth/authorize',array(
-            'client_id'=>$this->config['app_id'],
-            'redirect_uri' => 'blank.html',
-            'display' => 'wap',
-            'scope' =>  $this->GetFullAccessMask(),
-            'response_type'=>'code'
-        ),array(CURLOPT_FOLLOWLOCATION => true, CURLOPT_COOKIESESSION => true));
+        $last_request = $this->Curl($login_url,$params,array(CURLOPT_FOLLOWLOCATION => true, CURLOPT_COOKIESESSION => true));
 
         $last_request_info = end($last_request['info']);
         if($last_request_info['http_code'] != 200){throw new VK_Exception('Cannot get user auth form',$last_request);}
@@ -181,6 +183,24 @@ class VK_DesktopApi extends VK_Api{
         }
         preg_match('/code=([a-zA-Z0-9]+)/',$rurl,$code);
         return $code[1];
+    }
+
+    public function GetUserLoginUrl($redirect_uri = null, $scope = null)
+    {
+        $redirect_uri = $redirect_uri !== null ? $redirect_uri : URL::base(true);
+
+        $params = array(
+            'client_id'=>$this->config['app_id'],
+            'redirect_uri' => $redirect_uri,
+            'response_type'=>'code'
+        );
+        if($scope === true){
+            $params['scope'] =  $this->GetFullAccessMask();
+        }elseif($scope !== null){
+            $params['scope'] =  $scope;
+        }
+
+        return array('https://api.vk.com/oauth/authorize', $params);
     }
 
     /**
@@ -353,7 +373,7 @@ class VK_DesktopApi extends VK_Api{
         return $resp;
     }
 	
-    protected function Params($params)
+    public function Params($params)
 	{
         if(!is_array($params)){return $params;}
         
