@@ -2,6 +2,7 @@
 
 class VK_CmsApi extends VK_DesktopApi
 {
+    const VK_URL = 'http://vk.com/';
 	static $default_config = 'default';
 
     public function wall_uploadImage($filename,$giduid=array()){
@@ -31,7 +32,7 @@ class VK_CmsApi extends VK_DesktopApi
         ',$debug);
         for($i=0;$i<count($data['a']);$i++){
             if(!isset($data['covers'][$i])){
-                $data['covers'][$i]['src'] = $this->config['site_url'].'images/question_100.gif';
+                $data['covers'][$i]['src'] = self::VK_URL.'images/question_100.gif';
             }
         }
         return $data;
@@ -57,7 +58,7 @@ class VK_CmsApi extends VK_DesktopApi
 				'list' => null,
 				'photo' => $p['owner_id'].'_'.$p['pid']
 			));
-            $response = $this->Curl($this->config['site_url'].'al_photos.php',
+            $response = $this->Curl(self::VK_URL.'al_photos.php',
                 array(),
                 array(
                     CURLOPT_POST => true,
@@ -184,7 +185,7 @@ class VK_CmsApi extends VK_DesktopApi
             unset($p['gid'],$p['uid']);
 
             $page = $this->Curl(
-                $this->config['site_url'].'video.php',
+                self::VK_URL.'video.php',
                 array('gid'=>$gid),
                 array(
                     CURLOPT_COOKIE =>$this->getUserCookieStr()
@@ -296,7 +297,7 @@ class VK_CmsApi extends VK_DesktopApi
 
         do{
             $postEncoded = $this->Params($postParams);
-            $response = $this->Curl($this->config['site_url'].'al_search.php',
+            $response = $this->Curl(self::VK_URL.'al_search.php',
                 array(),
                 array(
                     CURLOPT_POST => true,
@@ -367,7 +368,7 @@ class VK_CmsApi extends VK_DesktopApi
 
 	public function messages_get($with_id,$offset=-1){
 		$page = $this->Curl(
-			$this->config['site_url'].'al_mail.php',
+			self::VK_URL.'al_mail.php',
 			array(
 				'act' => 'history',
 				'al' => 1,
@@ -430,7 +431,7 @@ class VK_CmsApi extends VK_DesktopApi
 			$group_name = $this->config['group_name'];
 		}
 		
-		$response = $this->Curl($this->config['site_url'].$group_name,
+		$response = $this->Curl(self::VK_URL.$group_name,
 			array(),
 			array(
 				CURLOPT_COOKIE =>$this->getUserCookieStr()
@@ -468,7 +469,7 @@ class VK_CmsApi extends VK_DesktopApi
 		/* Group avatar */
 		$group_avatar = $noko->get('#group_avatar')->toArray();
 		if(!($group_avatar = Arr::path($group_avatar,'0.img.0.src'))){
-			$group_avatar = $this->config['site_url'].'images/no_photo.png';
+			$group_avatar = self::VK_URL.'images/no_photo.png';
 		}
 
 		return array(

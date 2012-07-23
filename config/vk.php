@@ -16,6 +16,5 @@ return array(
         'user_pass'     => '',
 
         'group_name' => '',
-        'site_url' => 'http://vk.com'
     ),
 );
