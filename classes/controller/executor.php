@@ -9,7 +9,7 @@ class Controller_Executor extends Controller {
     {
         $tpl = new View('executor');
 		//get all available cfgs
-		$cfgs = array_keys((array)Kohana::config('vk'));
+		$cfgs = array_keys((array)Kohana::$config->load('vk'));
 		$tpl->set('configurations',$cfgs); //populate select
 		$current_cfg = Arr::get($_POST,'configuration',$cfgs[0]);
 		$tpl->set('selected_cfg',$current_cfg);

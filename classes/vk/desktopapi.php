@@ -39,7 +39,7 @@ class VK_DesktopApi extends VK_Api{
 		{
 			$instanceId = sha1(serialize($config));
 		}
-		else if(is_string($config) && $cfg_sect = Kohana::config('vk.'.$config))
+		else if(is_string($config) && $cfg_sect = Kohana::$config->load('vk.'.$config))
 		{
 			$instanceId = $config;
 			$config = $cfg_sect;
