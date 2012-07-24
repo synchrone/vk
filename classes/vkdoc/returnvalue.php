@@ -2,6 +2,14 @@
 /** @class VK */
 class VKDoc_ReturnValue extends stdClass implements ArrayAccess
 {
+    public static function factory($method,$data){
+        $clsname = get_called_class().'_'.$method;
+        if(class_exists($clsname)){
+            return new $clsname($data);
+        }
+        return new VKDoc_ReturnValue($data);
+    }
+
     protected $_data;
     public function __construct($data){
         $this->_data = $data;

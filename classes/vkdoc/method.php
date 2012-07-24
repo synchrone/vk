@@ -125,7 +125,7 @@ class VKDoc_Method
                 },$this->get_arguments())
             );
         }
-        $doc.= $pf.'@return '.$this->get_return_classname().
+        $doc.= $pf.'@return VKDoc_ReturnValue|'.$this->get_return_classname().
                "\n\t */\n";
         return $doc;
     }
@@ -151,8 +151,7 @@ class VKDoc_Method
                 },$this->get_arguments())
             );
         }
-
-        $doc .= $pf.sprintf("return new %s(\$this->Call('%s',\$params));\n",$this->get_return_classname(),$this->name);
+        $doc .= $pf.sprintf("return VKDoc_ReturnValue::factory('%s',\$this->Call('%s',\$params));\n",$this->safename,$this->name);
         $doc .= "\n\t}\n";
         return $doc;
     }
