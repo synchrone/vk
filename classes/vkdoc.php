@@ -9,19 +9,32 @@
 class VKDoc
 {
     public static $config = 'default';
+    public static $language = 'ru';
+
+    protected $languages = array(
+        'ru' => array(
+            'api' => array('gid'=>1,'title'=>"Описание методов API"),
+            'extended_api' => array('gid'=>1,'title'=>'Расширенные методы API')
+        ),
+        'en' => array(
+            'api' => array('gid'=>17680044,'title'=>"API_Method_Description"),
+            'extended_api' => array('gid'=>17680044,'title'=>'Advanced_API_Methods')
+        )
+    );
     protected $_methods;
     /** @var DateTime */
     protected $_last_modified;
 
-
     public function __construct(){
         $vk = VK_DesktopApi::Instance(self::$config);
 
-        $api = $vk->Call('pages.get',array('gid'=>1,'title'=>"Описание методов API"));
+        $api = $vk->Call('pages.get',
+            $this->languages[self::$language]['api']);
         $api['edited'] = new DateTime($api['edited']);
         $methods = self::parse_methods($api['source']);
 
-        $extended_api = $vk->Call('pages.get',array('gid'=>1,'title'=>'Расширенные методы API'));
+        $extended_api = $vk->Call('pages.get',
+            $this->languages[self::$language]['extended_api']);
         $extended_api['edited'] = new DateTime($extended_api['edited']);
         $extended_methods = self::parse_methods($extended_api['source']);
 

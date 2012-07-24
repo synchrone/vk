@@ -9,13 +9,15 @@
 class Task_VKDoc_Gen extends Minion_Task
 {
     protected $_options = array(
-        'config' => 'default'
+        'config' => 'default',
+        'lang'   => 'ru',
     );
 
     public function _execute(array $params){
         while(ob_get_level()){ob_end_flush();}
 
         VKDoc::$config = $params['config'];
+        VKDoc::$language = $params['lang'];
 
         $doc = new VKDoc();
 
@@ -34,7 +36,7 @@ class Task_VKDoc_Gen extends Minion_Task
             {
                 mkdir($dirname,0755,true);
             }
-            file_put_contents($filename, Kohana::FILE_SECURITY."\n".$val->get_return_class());
+            file_put_contents($filename, Kohana::FILE_SECURITY."\n\n".$val->get_return_class());
         }
     }
 }
