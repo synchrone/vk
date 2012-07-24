@@ -23,6 +23,7 @@ class Task_VKDoc_Gen extends Minion_Task
         $filename=MODPATH.'vk/classes/vkdoc/api/full.php';
         file_put_contents($filename,$class_contents);
 
+        //Notice: this code generates return value dummy classes without @property hint PHPDocs.
         $values_path = MODPATH.'vk/classes/vkdoc/returnvalue/';
         foreach($doc->get_methods() as /** @var $val VKDoc_Method*/ $val)
         {
