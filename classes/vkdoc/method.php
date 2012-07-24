@@ -47,7 +47,7 @@ class VKDoc_Method
     protected function get_wiki(){
         $cache = Cache::instance();
         if(!($wiki = $cache->get('vkdoc_'.$this->name))){
-            $wiki = VK_DesktopApi::Instance(VKDoc::$config)->pages_get(array('gid'=>1,'title'=>$this->name));
+            $wiki = VK_DesktopApi::Instance(VKDoc::$config)->Call('pages.get',array('gid'=>1,'title'=>$this->name));
             $cache->set('vkdoc_'.$this->name,$wiki,86400);
         }
         return $wiki;
