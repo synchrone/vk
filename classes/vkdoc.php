@@ -11,30 +11,54 @@ class VKDoc
     public static $config = 'default';
     public static $language = 'ru';
 
-    protected $languages = array(
+    public static $languages = array(
         'ru' => array(
             'api' => array('gid'=>1,'title'=>"Описание методов API"),
             'extended_api' => array('gid'=>1,'title'=>'Расширенные методы API')
         ),
         'en' => array(
-            'api' => array('gid'=>17680044,'title'=>"API_Method_Description"),
-            'extended_api' => array('gid'=>17680044,'title'=>'Advanced_API_Methods')
+            'api' => array('gid'=>17680044,'title'=>"API Method Description"),
+            'extended_api' => array('gid'=>17680044,'title'=>'Advanced API Methods')
         )
     );
     protected $_methods;
     /** @var DateTime */
     protected $_last_modified;
 
+    protected $_noarg_methods = array(
+        'getUserBalance',
+        'getSMSPrefix',
+        'getServerTime',
+        'getHighScores',
+        'friends.getAppUsers',
+        'friends.getLists',
+        'friends.deleteAllRequests',
+        'notifications.markAsViewed',
+        'places.getTypes',
+        'questions.getTypes',
+        'account.setOnline',
+        'fave.getLinks',
+        'offers.open',
+        'offers.close',
+        'messages.getLongPollServer',
+        'photos.getProfileUploadServer',
+        'photos.getMessagesUploadServer',
+        'docs.getWallUploadServer',
+        'docs.getUploadServer',
+        'audio.getUploadServer',
+        'wall.getPhotoUploadServer',
+    );
+
     public function __construct(){
         $vk = VK_DesktopApi::Instance(self::$config);
 
         $api = $vk->Call('pages.get',
-            $this->languages[self::$language]['api']);
+            self::$languages[self::$language]['api']);
         $api['edited'] = new DateTime($api['edited']);
         $methods = self::parse_methods($api['source']);
 
         $extended_api = $vk->Call('pages.get',
-            $this->languages[self::$language]['extended_api']);
+            self::$languages[self::$language]['extended_api']);
         $extended_api['edited'] = new DateTime($extended_api['edited']);
         $extended_methods = self::parse_methods($extended_api['source']);
 
@@ -43,8 +67,6 @@ class VKDoc
     }
 
     public function generate(){
-        $methods = $this->get_methods();
-
         $doc = sprintf(
             "/**\n".
             " * @version %s\n".
@@ -54,8 +76,20 @@ class VKDoc
             $this->get_last_modified()->format('Y-m-d H:i:s')
         );
 
-        foreach($this->get_methods() as /** @var VKDoc_Method */ $method){
-            $doc.=(string)$method;
+        foreach($this->get_methods() as /** @var $method VKDoc_Method */ $method){
+            if($method->get_name() == 'execute'){continue;} //that impl is hardcoded and proven to work
+            try{
+                if(count($method->get_arguments())===0 && !in_array($method->get_name(),$this->_noarg_methods)){
+                    echo sprintf('Notice: Method %s suddenly has 0 arguments. Check it\'s doc at http://vk.com/developers.php?oid=-%d&p=%s'.PHP_EOL,
+                        $method->get_name(), self::$languages[self::$language]['api']['gid'], $method->get_name());
+                }
+                $doc.=$method->get_code();
+            }catch(Exception $e)
+            {
+                echo sprintf('Error: Failed to parse documentation for method %s. Check it\'s doc at http://vk.com/developers.php?oid=-%d&p=%s'.PHP_EOL,
+                        $method->get_name(), self::$languages[self::$language]['api']['gid'], $method->get_name());
+                $doc.=$method->get_error_code();
+            }
         }
         $doc.='}';
         return $doc;

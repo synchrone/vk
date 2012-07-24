@@ -11,6 +11,6 @@ class Task_VKDoc_Show extends Minion_Task
     protected $_options = array('method'=>'pages.get');
 
     public function _execute(array $params){
-        echo VKDoc::get_doc($params['method']);
+        echo VKDoc::get_doc($params['method'])->get_code();
     }
 }

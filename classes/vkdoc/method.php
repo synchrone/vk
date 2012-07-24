@@ -46,9 +46,12 @@ class VKDoc_Method
 
     protected function get_wiki(){
         $cache = Cache::instance();
-        if(!($wiki = $cache->get('vkdoc_'.$this->name))){
-            $wiki = VK_DesktopApi::Instance(VKDoc::$config)->Call('pages.get',array('gid'=>1,'title'=>$this->name));
-            $cache->set('vkdoc_'.$this->name,$wiki,86400);
+        $gid=VKDoc::$languages[VKDoc::$language]['api']['gid'];
+        $cache_key = sprintf('vkdoc_%d_%s',$gid,$this->name);
+
+        if(!($wiki = $cache->get($cache_key))){
+            $wiki = VK_DesktopApi::Instance(VKDoc::$config)->Call('pages.get',array('gid'=>$gid,'title'=>$this->name));
+            $cache->set($cache_key,$wiki,86400);
         }
         return $wiki;
     }
@@ -76,10 +79,16 @@ class VKDoc_Method
 
     protected function find_parameters_table($wikipage){
         $wiki = strip_tags(htmlspecialchars_decode(str_replace('<br>',"\n",$wikipage['source'])));
-        if(stripos($wiki,'не имеет параметров') !== false){return false;}
-        preg_match('/Параметры[[:space:]]*==.*(\{\|.+\|\}).*==/imsU',$wiki,$wiki_table);
-        if(empty($wiki_table)){return false;}
-        return $wiki_table[1];
+        if(
+            stripos($wiki,'не имеет параметров') !== false ||
+            stripos($wiki,'has no parameters') !== false ||
+            stripos($wiki,'does not have any parameters') !== false
+        ){
+            return false;
+        }
+        preg_match('/(Parameters|Параметры)[[:space:]\x{C2}\x{A0}]*==.*(\{\|.+\|\}).*==/imsU',$wiki,$wiki_table);
+        if(empty($wiki_table)){ throw new VK_Exception('Cannot parse parameters from wikipage',$wikipage);}
+        return $wiki_table[2];
     }
 
     public function get_arguments()
@@ -156,18 +165,17 @@ class VKDoc_Method
         return $doc;
     }
 
-    public function __toString(){
-        try{
-            return  $this->get_phpdoc().
-                $this->get_signature().
-                $this->get_body()
-            ;
-        }catch (Exception $e){
-            Kohana::$log->add(Kohana_Log::ERROR,'Could not parse method info for '.$this->name);
-            return sprintf(
-                "\tpublic function %s(array \$p){ return new VKDoc_ReturnValue(\$this->Call('%s',\$p));} // ERROR: Getting advanced info failed. Check logs\n",
-                $this->safename,$this->name
-            );
-        }
+    public function get_error_code(){
+        return sprintf(
+            "\tpublic function %s(array \$p){ return new VKDoc_ReturnValue(\$this->Call('%s',\$p));} // ERROR: Getting advanced info failed. Check logs\n",
+            $this->safename,$this->name
+        );
+    }
+
+    public function get_code(){
+        return  $this->get_phpdoc().
+            $this->get_signature().
+            $this->get_body()
+        ;
     }
 }

@@ -22,7 +22,7 @@ class Task_VKDoc_Gen extends Minion_Task
 
         $doc = new VKDoc();
         $class_contents = Kohana::FILE_SECURITY."\n".$doc->generate();
-        
+
         $filename=MODPATH.'vk/classes/vkdoc/api/full.php';
         file_put_contents($filename,$class_contents);
 
