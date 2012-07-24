@@ -987,9 +987,9 @@ abstract class VKDoc_Api_Full {
 		return new VKDoc_ReturnValue_video_get($this->Call('video.get',$params));
 
 	}
-	public function video_edit(array $p){ return new VK_ReturnValue($this->Call('video.edit',$p));} // ERROR: Getting advanced info failed. Check logs
-	public function video_add(array $p){ return new VK_ReturnValue($this->Call('video.add',$p));} // ERROR: Getting advanced info failed. Check logs
-	public function video_delete(array $p){ return new VK_ReturnValue($this->Call('video.delete',$p));} // ERROR: Getting advanced info failed. Check logs
+	public function video_edit(array $p){ return new VKDoc_ReturnValue($this->Call('video.edit',$p));} // ERROR: Getting advanced info failed. Check logs
+	public function video_add(array $p){ return new VKDoc_ReturnValue($this->Call('video.add',$p));} // ERROR: Getting advanced info failed. Check logs
+	public function video_delete(array $p){ return new VKDoc_ReturnValue($this->Call('video.delete',$p));} // ERROR: Getting advanced info failed. Check logs
 	/**
 	 * возвращает список видеозаписей в соответствии с заданным критерием поиска.
 	 * @param $q mixed строка поискового запроса. Например, 'The Beatles'.
@@ -1024,7 +1024,7 @@ abstract class VKDoc_Api_Full {
 		return new VKDoc_ReturnValue_video_getUserVideos($this->Call('video.getUserVideos',$params));
 
 	}
-	public function video_getComments(array $p){ return new VK_ReturnValue($this->Call('video.getComments',$p));} // ERROR: Getting advanced info failed. Check logs
+	public function video_getComments(array $p){ return new VKDoc_ReturnValue($this->Call('video.getComments',$p));} // ERROR: Getting advanced info failed. Check logs
 	/**
 	 * создает новый комментарий к видеозаписи.
 	 * @param $vid mixed идентификатор видеозаписи.
