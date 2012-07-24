@@ -10,7 +10,6 @@ return array(
         //or just specify data to get token emulating user auth
         'app_id'           => 0,
         'app_secret'       => '',
-        'app_redirect_uri' => '',
 
         'user_email'    => '',
         'user_pass'     => '',
