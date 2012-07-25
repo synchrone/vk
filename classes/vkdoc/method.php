@@ -104,14 +104,19 @@ class VKDoc_Method
             }
             $params = $this->find_parameters($table);
 
+            $args = array();
+            $optional_args = array();
+
             foreach($params as $param){
-                $this->arguments[] = new VKDoc_Argument(array('name'=>$param[0],'optional'=>$param[1],'description'=>$param[2]));
+                $argument = new VKDoc_Argument(array('name'=>$param[0],'optional'=>$param[1],'description'=>$param[2]));
+                if($argument->optional){
+                    $optional_args[] = $argument;
+                }else{
+                    $args[] = $argument;
+                }
             }
 
-            usort($this->arguments, function(VKDoc_Argument $a, VKDoc_Argument $b){
-                if($a->optional && $b->optional){return 0;}
-                return $a->optional && !$b->optional ? 1 : -1;
-            });
+            $this->arguments = array_merge($args,$optional_args);
         }
         return $this->arguments;
     }
