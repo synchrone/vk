@@ -117,7 +117,7 @@ class VK_DesktopApi extends VK_Api{
 
     /**
      * @return string App auth code
-     * @throws Exception
+     * @throws VK_Exception
      */
     private function LoginUser(){
         list($login_url,$params) = $this->GetUserLoginUrl('blank.html', true);
@@ -206,7 +206,7 @@ class VK_DesktopApi extends VK_Api{
     /**
      * @param string $code App auth code returned by user
      * @return string VK API Token
-     * @throws Exception
+     * @throws VK_Exception
      */
     public function LoginApp($code = null){
         if(isset($this->config['token']) && //authd
