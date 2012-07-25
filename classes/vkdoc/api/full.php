@@ -1,15 +1,16 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /**
- * @version 2012-06-13 21:46:54
+ * @version 2012-07-25 13:37:54
  */
 abstract class VKDoc_Api_Full {
 
 	abstract function Call($name, array $p = array());
 
 	/**
-	 * returns information on whether a user has installed the given application or not.
-	 * @param $uid mixed user ID. ID of the current user by default.
+	 * возвращает информацию о том, установил ли пользователь данное приложение.
+	 * @param $uid mixed ID пользователя. По умолчанию ID текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_isAppUser
+	 * @link http://vk.com/developers.php?oid=-1&p=isAppUser
 	 */
 	public function isAppUser($uid = null){
 		$params = array();
@@ -18,25 +19,43 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns advanced information about users.
-	 * @param $uids mixed list of user IDs, separated by a comma (1000 max.).
-	 * @param $namecase mixed grammatical case for the declension of a user's name. Possible values: nominative – 'nom', genitive – 'gen', dative – 'dat', accusative – 'acc', instrumental – 'ins', prepositional – 'abl'. 'nom' by default.
-	 * @param $domains mixed users' addresses, separated by a comma (used instead of uids).
-	 * @param $fields mixed profile fields that are necessary to obtain, separated by a comma. Available values: uid, first_name, last_name, nickname, domain, sex, bdate (birthdate), city, country, timezone, photo, photo_medium, photo_big, has_mobile, rate, contacts, education.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getProfiles
+	 * возвращает расширенную информацию о пользователях.
+	 * @param $uids mixed перечисленные через запятую ID пользователей или их короткие имена (screen_name). Максимум '1000' пользователей.
+	 * @param $fields mixed перечисленные через запятую поля анкет, необходимые для получения. Доступные значения: uid, first_name, last_name, nickname, screen_name, sex, bdate (birthdate), city, country, timezone, photo, photo_medium, photo_big, has_mobile, rate, contacts, education, online, counters.
+	 * @param $name_case mixed падеж для склонения имени и фамилии пользователя. Возможные значения: именительный – 'nom', родительный – 'gen', дательный – 'dat', винительный – 'acc', творительный – 'ins', предложный – 'abl'. По умолчанию 'nom'.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_users_get
+	 * @link http://vk.com/developers.php?oid=-1&p=users.get
 	 */
-	public function getProfiles($uids, $namecase = null, $domains = null, $fields = null){
+	public function users_get($uids, $fields = null, $name_case = null){
 		$params = array();
 		$params['uids'] = $uids;
-		if($namecase !== null){ $params['namecase'] = $namecase;}
-		if($domains !== null){ $params['domains'] = $domains;}
 		if($fields !== null){ $params['fields'] = $fields;}
-		return VKDoc_ReturnValue::factory('getProfiles',$this->Call('getProfiles',$params));
+		if($name_case !== null){ $params['name_case'] = $name_case;}
+		return VKDoc_ReturnValue::factory('users_get',$this->Call('users.get',$params));
 
 	}
 	/**
-	 * returns the balance of the current user in the given application.
+	 * возвращает список пользователей в соответствии с заданным критерием поиска.
+	 * @param $q mixed строка поискового запроса. Например, 'Вася Бабич'.
+	 * @param $fields mixed перечисленные через запятую поля анкет, необходимые для получения. Доступные значения: uid, first_name, last_name, nickname, screen_name, sex, bdate (birthdate), city, country, timezone, photo, photo_medium, photo_big, has_mobile, rate, contacts, education, online.
+	 * @param $count mixed количество возвращаемых пользователей (максимум 1000). По умолчанию '20'.
+	 * @param $offset mixed смещение относительно первого найденного пользователя для выборки определенного подмножества.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_users_search
+	 * @link http://vk.com/developers.php?oid=-1&p=users.search
+	 */
+	public function users_search($q, $fields = null, $count = null, $offset = null){
+		$params = array();
+		$params['q'] = $q;
+		if($fields !== null){ $params['fields'] = $fields;}
+		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		return VKDoc_ReturnValue::factory('users_search',$this->Call('users.search',$params));
+
+	}
+	/**
+	 * возвращает баланс текущего пользователя в данном приложении.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getUserBalance
+	 * @link http://vk.com/developers.php?oid=-1&p=getUserBalance
 	 */
 	public function getUserBalance(){
 		$params = array();
@@ -44,48 +63,71 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns the application settings of the current user.
+	 * возвращает настройки приложения текущего пользователя.
+	 * @param $uid mixed ID пользователя. По умолчанию ID текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getUserSettings
+	 * @link http://vk.com/developers.php?oid=-1&p=getUserSettings
 	 */
-	public function getUserSettings(){
+	public function getUserSettings($uid = null){
 		$params = array();
+		if($uid !== null){ $params['uid'] = $uid;}
 		return VKDoc_ReturnValue::factory('getUserSettings',$this->Call('getUserSettings',$params));
 
 	}
 	/**
-	 * returns a list of group ids of which the current user is a member.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getGroups
+	 * возвращает список пользователей, которые добавили объект в список «Мне нравится».
+	 * @param $type mixed тип Like-объекта. Подробнее о типах объектов можно узнать на странице [[Список типов Like-объектов]].
+	 * @param $owner_id mixed идентификатор владельца Like-объекта (id пользователя или id приложения). Если параметр type равен 'sitepage', то в качестве owner_id необходимо передавать id приложения. Если параметр не задан, то считается, что он равен либо идентификатору текущего пользователя, либо идентификатору текущего приложения (если type равен sitepage).
+	 * @param $item_id mixed идентификатор Like-объекта. Если type равен sitepage, то параметр item_id может содержать значение параметра page_id, используемый при инициализации [[Like
+	 * @param $page_url mixed url страницы, на которой установлен [[Like
+	 * @param $filter mixed указывает, следует ли вернуть всех пользователей, добавивших объект в список "Мне нравится" или только тех, которые рассказали о нем друзьям. Параметр может принимать следующие значения:'likes' – возвращать всех пользователей'copies' – возвращать только пользователей, рассказавших об объекте друзьямПо умолчанию возвращаются все пользователи.
+	 * @param $friends_only mixed указывает, необходимо ли возвращать только пользователей, которые являются друзьями текущего пользователя. Параметр может принимать следующие значения:'0' – возвращать всех пользователей в порядке убывания времени добавления объекта'1' – возвращать только друзей текущего пользователя в порядке убывания времени добавления объектаЕсли метод был вызван без авторизации или параметр не был задан, то считается, что он равен 0.
+	 * @param $offset mixed смещение, относительно начала списка, для выборки определенного подмножества. Если параметр не задан, то считается, что он равен 0.
+	 * @param $count mixed количество возвращаемых идентификаторов пользователей.Если параметр не задан, то считается, что он равен 100, если не задан параметр 'friends_only', в противном случае 10.Максимальное значение параметра 1000, если не задан параметр 'friends_only', в противном случае 100.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_likes_getList
+	 * @link http://vk.com/developers.php?oid=-1&p=likes.getList
 	 */
-	public function getGroups(){
+	public function likes_getList($type, $owner_id = null, $item_id = null, $page_url = null, $filter = null, $friends_only = null, $offset = null, $count = null){
 		$params = array();
-		return VKDoc_ReturnValue::factory('getGroups',$this->Call('getGroups',$params));
+		$params['type'] = $type;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($item_id !== null){ $params['item_id'] = $item_id;}
+		if($page_url !== null){ $params['page_url'] = $page_url;}
+		if($filter !== null){ $params['filter'] = $filter;}
+		if($friends_only !== null){ $params['friends_only'] = $friends_only;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		return VKDoc_ReturnValue::factory('likes_getList',$this->Call('likes.getList',$params));
 
 	}
 	/**
-	 * returns standard information about groups of which the current user is a member.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getGroupsFull
-	 */
-	public function getGroupsFull(){
-		$params = array();
-		return VKDoc_ReturnValue::factory('getGroupsFull',$this->Call('getGroupsFull',$params));
-
-	}
-	/**
-	 * returns a list of ids of a user's friends.
-	 * @param $namecase mixed grammatical case for the declension of a user's name. Possible values: nominative – 'nom', genitive – 'gen', dative – 'dat', accusative – 'acc', instrumental – 'ins', prepositional – 'abl'. 'nom' by default.
-	 * @param $fields mixed profile fields that are necessary to obtain, separated by a comma. Available values: uid, first_name, last_name, nickname, sex, bdate (birthdate), city, country, timezone, photo, photo_medium, photo_big, online, lists, domain, has_mobile, rate, contacts, education.
+	 * возвращает список id друзей пользователя.
+	 * @param $uid mixed идентификатор пользователя, для которого необходимо получить список друзей. Если параметр не задан, то считается, что он равен идентификатору текущего пользователя.
+	 * @param $fields mixed перечисленные через запятую поля анкет, необходимые для получения. Доступные значения: uid, first_name, last_name, nickname, sex, bdate (birthdate), city, country, timezone, photo, photo_medium, photo_big, domain, has_mobile, rate, contacts, education.
+	 * @param $name_case mixed падеж для склонения имени и фамилии пользователя. Возможные значения: именительный – 'nom', родительный – 'gen', дательный – 'dat', винительный – 'acc', творительный – 'ins', предложный – 'abl'. По умолчанию 'nom'.
+	 * @param $count mixed количество друзей, которое нужно вернуть. (по умолчанию – 'все друзья')
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества друзей.
+	 * @param $lid mixed идентификатор списка друзей, полученный методом [[friends.getLists]], друзей из которого необходимо получить. Данный параметр учитывается, только когда параметр 'uid' равен идентификатору текущего пользователя.'Данный параметр доступен только для [[Авторизация Desktop-приложений
+	 * @param $order mixed Порядок в котором нужно вернуть список друзей. Допустимые значения: 'name' - сортировать по имени (работает только при переданном параметре 'fields'). 'hints' - сортировать по рейтингу, аналогично тому, как друзья сортируются в разделе 'Моя друзья' (данный параметр доступен только для [[Авторизация Desktop-приложений
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_friends_get
+	 * @link http://vk.com/developers.php?oid=-1&p=friends.get
 	 */
-	public function friends_get($namecase = null, $fields = null){
+	public function friends_get($uid = null, $fields = null, $name_case = null, $count = null, $offset = null, $lid = null, $order = null){
 		$params = array();
-		if($namecase !== null){ $params['namecase'] = $namecase;}
+		if($uid !== null){ $params['uid'] = $uid;}
 		if($fields !== null){ $params['fields'] = $fields;}
+		if($name_case !== null){ $params['name_case'] = $name_case;}
+		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($lid !== null){ $params['lid'] = $lid;}
+		if($order !== null){ $params['order'] = $order;}
 		return VKDoc_ReturnValue::factory('friends_get',$this->Call('friends.get',$params));
 
 	}
 	/**
-	 * returns a list of ids of a user's friends that have installed the given application.
+	 * возвращает список id друзей пользователя, которые установили данное приложение.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_friends_getAppUsers
+	 * @link http://vk.com/developers.php?oid=-1&p=friends.getAppUsers
 	 */
 	public function friends_getAppUsers(){
 		$params = array();
@@ -93,216 +135,314 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns the current status of a user.
-	 * @param $uid mixed user ID (the current user by default).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_activity_get
+	 * возвращает список id друзей пользователя, находящихся сейчас на сайте.
+	 * @param $uid mixed идентификатор пользователя, для которого необходимо получить список друзей, находящихся сейчас на сайте. Если параметр не задан, то считается, что он равен идентификатору текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_friends_getOnline
+	 * @link http://vk.com/developers.php?oid=-1&p=friends.getOnline
 	 */
-	public function activity_get($uid = null){
+	public function friends_getOnline($uid = null){
 		$params = array();
 		if($uid !== null){ $params['uid'] = $uid;}
-		return VKDoc_ReturnValue::factory('activity_get',$this->Call('activity.get',$params));
+		return VKDoc_ReturnValue::factory('friends_getOnline',$this->Call('friends.getOnline',$params));
 
 	}
 	/**
-	 * sets the status of the current user.
-	 * @param $text mixed status text.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_activity_set
+	 * возвращает список id общих друзей между парой пользователей.
+	 * @param $target_uid mixed идентификатор пользователя, с которым необходимо искать общих друзей.
+	 * @param $source_uid mixed идентификатор пользователя, чьи друзья пересекаются с друзьями пользователя с идентификатором 'target_uid'. Если параметр не задан, то считается, что 'source_uid' равен идентификатору текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_friends_getMutual
+	 * @link http://vk.com/developers.php?oid=-1&p=friends.getMutual
 	 */
-	public function activity_set($text){
+	public function friends_getMutual($target_uid, $source_uid = null){
 		$params = array();
-		$params['text'] = $text;
-		return VKDoc_ReturnValue::factory('activity_set',$this->Call('activity.set',$params));
+		$params['target_uid'] = $target_uid;
+		if($source_uid !== null){ $params['source_uid'] = $source_uid;}
+		return VKDoc_ReturnValue::factory('friends_getMutual',$this->Call('friends.getMutual',$params));
 
 	}
 	/**
-	 * returns status history.
-	 * @param $uid mixed user ID (the current user by default).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_activity_getHistory
+	 * возвращает информацию о дружбе между двумя пользователями.
+	 * @param $uids mixed Список идентификаторов пользователей, раделённых запятыми, статус дружбы с которыми необходимо получить.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_friends_areFriends
+	 * @link http://vk.com/developers.php?oid=-1&p=friends.areFriends
 	 */
-	public function activity_getHistory($uid = null){
+	public function friends_areFriends($uids){
+		$params = array();
+		$params['uids'] = $uids;
+		return VKDoc_ReturnValue::factory('friends_areFriends',$this->Call('friends.areFriends',$params));
+
+	}
+	/**
+	 * возвращает список групп пользователя.
+	 * @param $uid mixed ID пользователя, группы которого необходимо получить. По умолчанию выбираются группы текущего пользователя.
+	 * @param $extended mixed Если указать в качестве этого параметра '1', то будет возвращена полная информация о группах пользователя. По умолчанию '0'.
+	 * @param $filter mixed Список фильтров сообществ, которые необходимо вернуть, перечисленные через запятую. Доступны значения 'admin', 'groups', 'publics', 'events'. По умолчанию возвращаются все сообщества пользователя.При указании фильтра 'admin' будут возвращены администрируемые пользователем сообщества.
+	 * @param $fields mixed Список полей из информации о группах, которые необходимо получить. См. [[Параметр fields для групп]]
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_groups_get
+	 * @link http://vk.com/developers.php?oid=-1&p=groups.get
+	 */
+	public function groups_get($uid = null, $extended = null, $filter = null, $fields = null){
 		$params = array();
 		if($uid !== null){ $params['uid'] = $uid;}
-		return VKDoc_ReturnValue::factory('activity_getHistory',$this->Call('activity.getHistory',$params));
+		if($extended !== null){ $params['extended'] = $extended;}
+		if($filter !== null){ $params['filter'] = $filter;}
+		if($fields !== null){ $params['fields'] = $fields;}
+		return VKDoc_ReturnValue::factory('groups_get',$this->Call('groups.get',$params));
 
 	}
 	/**
-	 * deletes an element from the status history of the current user.
-	 * @param $aid mixed status identifier (activity id).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_activity_deleteHistoryItem
+	 * возвращает информацию о группах по их идентификаторам.
+	 * @param $gids mixed ID групп, перечисленные через запятую, информацию о которых необходимо получить. В качестве ID могут быть использованы короткие имена групп. Максимум '500' групп.
+	 * @param $fields mixed Список полей из информации о группах, которые необходимо получить. См. [[Параметр fields для групп]]
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_groups_getById
+	 * @link http://vk.com/developers.php?oid=-1&p=groups.getById
 	 */
-	public function activity_deleteHistoryItem($aid){
+	public function groups_getById($gids, $fields = null){
 		$params = array();
-		$params['aid'] = $aid;
-		return VKDoc_ReturnValue::factory('activity_deleteHistoryItem',$this->Call('activity.deleteHistoryItem',$params));
+		$params['gids'] = $gids;
+		if($fields !== null){ $params['fields'] = $fields;}
+		return VKDoc_ReturnValue::factory('groups_getById',$this->Call('groups.getById',$params));
 
 	}
 	/**
-	 * returns friends' status updates.
-	 * @param $count mixed the number of statuses necessary to obtain (no more than 100). Ignored if timestamp is set to nonzero.
-	 * @param $offset mixed offset, required for selecting a certain subcollection of statuses. Ignored if timestamp is set to nonzero.
-	 * @param $timestamp mixed statuses that have been created no earlier than this time (unixtime) will be returned. If this parameter is not specified, then the offset and count parameters will be used.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_activity_getNews
+	 * возвращает информацию о том, является ли пользователь участником группы.
+	 * @param $gid mixed ID или короткое имя группы.
+	 * @param $uid mixed ID пользователя. По умолчанию ID текущего пользователя.
+	 * @param $extended mixed 1 - вернуть ответ в расширенной форме, 2 - возвращать ответ в сокращённой форме ('по умолчанию')
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_groups_isMember
+	 * @link http://vk.com/developers.php?oid=-1&p=groups.isMember
 	 */
-	public function activity_getNews($count = null, $offset = null, $timestamp = null){
+	public function groups_isMember($gid, $uid = null, $extended = null){
 		$params = array();
+		$params['gid'] = $gid;
+		if($uid !== null){ $params['uid'] = $uid;}
+		if($extended !== null){ $params['extended'] = $extended;}
+		return VKDoc_ReturnValue::factory('groups_isMember',$this->Call('groups.isMember',$params));
+
+	}
+	/**
+	 * возвращает список участников группы.
+	 * @param $gid mixed ID или короткое имя группы, список пользователей которой необходимо получить.
+	 * @param $count mixed Максимальное количество участников группы, которое необходимо получить. Максимальное значение '1000'.
+	 * @param $offset mixed Число, обозначающее смещение, для получения следующих после него участников.
+	 * @param $sort mixed Сортировка с которой необходимо вернуть список групп. Может принимать параметры: 'id_asc', 'id_desc', 'time_asc', 'time_desc'.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_groups_getMembers
+	 * @link http://vk.com/developers.php?oid=-1&p=groups.getMembers
+	 */
+	public function groups_getMembers($gid, $count = null, $offset = null, $sort = null){
+		$params = array();
+		$params['gid'] = $gid;
 		if($count !== null){ $params['count'] = $count;}
 		if($offset !== null){ $params['offset'] = $offset;}
-		if($timestamp !== null){ $params['timestamp'] = $timestamp;}
-		return VKDoc_ReturnValue::factory('activity_getNews',$this->Call('activity.getNews',$params));
+		if($sort !== null){ $params['sort'] = $sort;}
+		return VKDoc_ReturnValue::factory('groups_getMembers',$this->Call('groups.getMembers',$params));
 
 	}
 	/**
-	 * returns a list of a user's albums.
-	 * @param $aids mixed list of album IDs, separated by a comma.
-	 * @param $uid mixed user ID to whom the album belongs (the current user by default).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getAlbums
+	 * Осуществляет поиск групп по заданной подстроке.
+	 * @param $q mixed Поисковый запрос по которому необходимо найти группу.
+	 * @param $offset mixed Смещение, необходимое для выборки определённого подмножества результатов поиска.
+	 * @param $count mixed Количество результатов поиска которое необходимо вернуть.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_groups_search
+	 * @link http://vk.com/developers.php?oid=-1&p=groups.search
 	 */
-	public function photos_getAlbums($aids = null, $uid = null){
+	public function groups_search($q = null, $offset = null, $count = null){
 		$params = array();
-		if($aids !== null){ $params['aids'] = $aids;}
+		if($q !== null){ $params['q'] = $q;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		return VKDoc_ReturnValue::factory('groups_search',$this->Call('groups.search',$params));
+
+	}
+	/**
+	 * возвращает список альбомов пользователя.
+	 * @param $uid mixed ID пользователя, которому принадлежат альбомы. По умолчанию – ID текущего пользователя.
+	 * @param $gid mixed ID группы, которой принадлежат альбомы.
+	 * @param $aids mixed перечисленные через запятую ID альбомов.
+	 * @param $need_covers mixed '1' - будет возвращено дополнительное поле 'thumb_src'. По умолчанию поле 'thumb_src' не возвращается.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getAlbums
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.getAlbums
+	 */
+	public function photos_getAlbums($uid = null, $gid = null, $aids = null, $need_covers = null){
+		$params = array();
 		if($uid !== null){ $params['uid'] = $uid;}
+		if($gid !== null){ $params['gid'] = $gid;}
+		if($aids !== null){ $params['aids'] = $aids;}
+		if($need_covers !== null){ $params['need_covers'] = $need_covers;}
 		return VKDoc_ReturnValue::factory('photos_getAlbums',$this->Call('photos.getAlbums',$params));
 
 	}
 	/**
-	 * returns a list of photos in an album.
-	 * @param $uid mixed user ID to whom the photo album belongs.
-	 * @param $aid mixed ID of the photo album.
-	 * @param $pids mixed list of photo IDs, separated by a comma.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_get
+	 * возвращает количество альбомов пользователя.
+	 * @param $uid mixed ID пользователя, которому принадлежат альбомы. По умолчанию – ID текущего пользователя.
+	 * @param $gid mixed ID группы, которой принадлежат альбомы.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getAlbumsCount
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.getAlbumsCount
 	 */
-	public function photos_get($uid, $aid, $pids = null){
+	public function photos_getAlbumsCount($uid = null, $gid = null){
+		$params = array();
+		if($uid !== null){ $params['uid'] = $uid;}
+		if($gid !== null){ $params['gid'] = $gid;}
+		return VKDoc_ReturnValue::factory('photos_getAlbumsCount',$this->Call('photos.getAlbumsCount',$params));
+
+	}
+	/**
+	 * возвращает список фотографий в альбоме.
+	 * @param $uid mixed ID пользователя, которому принадлежит альбом с фотографиями.
+	 * @param $gid mixed ID группы, которой принадлежит альбом с фотографиями.
+	 * @param $aid mixed ID альбома с фотографиями.
+	 * @param $pids mixed перечисленные через запятую ID фотографий.
+	 * @param $extended mixed '1' - будет возвращено дополнительное поле 'likes'. По умолчанию поле 'likes' не возвращается.
+	 * @param $limit mixed количество фотографий, которое нужно вернуть. (по умолчанию – 'все фотографии')
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества фотографий.
+	 * @param $feed mixed Unixtime, который может быть получен методом [[newsfeed.get]] в поле 'date', для получения всех фотографий загруженных пользователем в определённый день либо на которых пользователь был отмечен. Также нужно указать параметр 'uid' пользователя, с которым произошло событие.
+	 * @param $feed_type mixed Тип новости получаемый в  поле 'type' метода [[newsfeed.get]], для получения только загруженных пользователем фотографий, либо только фотографий, на которых он был отмечен. Может принимать значения 'photo', 'photo_tag'.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_get
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.get
+	 */
+	public function photos_get($uid, $gid, $aid, $pids = null, $extended = null, $limit = null, $offset = null, $feed = null, $feed_type = null){
 		$params = array();
 		$params['uid'] = $uid;
+		$params['gid'] = $gid;
 		$params['aid'] = $aid;
 		if($pids !== null){ $params['pids'] = $pids;}
+		if($extended !== null){ $params['extended'] = $extended;}
+		if($limit !== null){ $params['limit'] = $limit;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($feed !== null){ $params['feed'] = $feed;}
+		if($feed_type !== null){ $params['feed_type'] = $feed_type;}
 		return VKDoc_ReturnValue::factory('photos_get',$this->Call('photos.get',$params));
 
 	}
 	/**
-	 * returns information about photos.
-	 * @param $photos mixed list of identifiers, separated by a comma, that represent two components separated by an underscore: the ids that have posted photos, and the ids of the photos themselves.Example of the "photos" value: '1_129207899,6492_135055734'
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getById
+	 * Возвращает список фотографий со страницы пользователя.
+	 * @param $uid mixed ID пользователя, которому принадлежит альбом с фотографиями.
+	 * @param $extended mixed '1' - будет возвращено дополнительное поле 'likes'. По умолчанию поле 'likes' не возвращается.
+	 * @param $limit mixed количество фотографий, которое нужно вернуть. (по умолчанию – 'все фотографии')
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества фотографий.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getProfile
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.getProfile
 	 */
-	public function photos_getById($photos = null){
+	public function photos_getProfile($uid, $extended = null, $limit = null, $offset = null){
+		$params = array();
+		$params['uid'] = $uid;
+		if($extended !== null){ $params['extended'] = $extended;}
+		if($limit !== null){ $params['limit'] = $limit;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		return VKDoc_ReturnValue::factory('photos_getProfile',$this->Call('photos.getProfile',$params));
+
+	}
+	/**
+	 * возвращает все фотографии пользователя в антихронологическом порядке.
+	 * @param $owner_id mixed идентификатор пользователя (по умолчанию - текущий пользователь). Если передано отрицательное значение, вместо фотографий пользователя будут возвращены все фотографии группы с идентификатором '-owner_id'.
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества фотографий.
+	 * @param $count mixed количество фотографий, которое необходимо получить (но не более 100).
+	 * @param $extended mixed '1' - будет возвращено дополнительное поле 'likes'. По умолчанию поле 'likes' не возвращается.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getAll
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.getAll
+	 */
+	public function photos_getAll($owner_id = null, $offset = null, $count = null, $extended = null){
+		$params = array();
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		if($extended !== null){ $params['extended'] = $extended;}
+		return VKDoc_ReturnValue::factory('photos_getAll',$this->Call('photos.getAll',$params));
+
+	}
+	/**
+	 * возвращает информацию о фотографиях.
+	 * @param $photos mixed перечисленные через запятую идентификаторы, которые представляют собой идущие через знак подчеркивания id пользователей, разместивших фотографии, и id самих фотографий. Чтобы получить информацию о фотографии в альбоме группы, вместо id пользователя следует указать -id группы.Пример значения photos: 1_129207899,6492_135055734,
+	 * @param $extended mixed '1' - будет возвращено дополнительное поле 'likes'. По умолчанию поле 'likes' не возвращается.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getById
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.getById
+	 */
+	public function photos_getById($photos = null, $extended = null){
 		$params = array();
 		if($photos !== null){ $params['photos'] = $photos;}
+		if($extended !== null){ $params['extended'] = $extended;}
 		return VKDoc_ReturnValue::factory('photos_getById',$this->Call('photos.getById',$params));
 
 	}
 	/**
-	 * creates an empty photo album.
-	 * @param $title mixed album name.
-	 * @param $description mixed album description text.
-	 * @param $privacy mixed album access level. Values: 0 – all users, 1 – only friends, 2 – only friends and friends of friends, 3 – only me.
-	 * @param $commentprivacy mixed album commenting access level. Values: 0 – all users, 1 – only friends, 2 – only friends and friends of friends, 3 – only me.
+	 * создает пустой альбом для фотографий.
+	 * @param $title mixed название альбома.
+	 * @param $privacy mixed уровень доступа к альбому. Значения: 0 – все пользователи, 1 – только друзья, 2 – друзья и друзья друзей, 3 - только я.
+	 * @param $comment_privacy mixed уровень доступа к комментированию альбома. Значения: 0 – все пользователи, 1 – только друзья, 2 – друзья и друзья друзей, 3 - только я.
+	 * @param $description mixed текст описания альбома.
+	 * @param $gid mixed идентификатор группы, в которой создаётся альбом. В этом случае privacy и comment_privacy могут принимать два значения: 0 - доступ для всех пользователей, 1 - доступ только для участников группы.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_createAlbum
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.createAlbum
 	 */
-	public function photos_createAlbum($title, $description = null, $privacy = null, $commentprivacy = null){
+	public function photos_createAlbum($title, $privacy = null, $comment_privacy = null, $description = null, $gid = null){
 		$params = array();
 		$params['title'] = $title;
-		if($description !== null){ $params['description'] = $description;}
 		if($privacy !== null){ $params['privacy'] = $privacy;}
-		if($commentprivacy !== null){ $params['commentprivacy'] = $commentprivacy;}
+		if($comment_privacy !== null){ $params['comment_privacy'] = $comment_privacy;}
+		if($description !== null){ $params['description'] = $description;}
+		if($gid !== null){ $params['gid'] = $gid;}
 		return VKDoc_ReturnValue::factory('photos_createAlbum',$this->Call('photos.createAlbum',$params));
 
 	}
 	/**
-	 * updates photo album data.
-	 * @param $aid mixed ID of the album that is being edited.
-	 * @param $title mixed new album name.
-	 * @param $description mixed new album description text.
-	 * @param $privacy mixed new album access level. Values: 0 – all users, 1 – only friends, 2 – only friends and friends of friends, 3 – only me.
-	 * @param $commentprivacy mixed new album commenting access level. Values: 0 – all users, 1 – only friends, 2 – only friends and friends of friends, 3 – only me.
+	 * обновляет данные альбома для фотографий.
+	 * @param $aid mixed идентификатор редактируемого альбома.
+	 * @param $title mixed новое название альбома.
+	 * @param $privacy mixed новый уровень доступа к альбому. Значения: 0 – все пользователи, 1 – только друзья, 2 – друзья и друзья друзей, 3 - только я.
+	 * @param $comment_privacy mixed новый уровень доступа к комментированию альбома. Значения: 0 – все пользователи, 1 – только друзья, 2 – друзья и друзья друзей, 3 - только я.
+	 * @param $description mixed новый текст описания альбома.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_editAlbum
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.editAlbum
 	 */
-	public function photos_editAlbum($aid, $title, $description = null, $privacy = null, $commentprivacy = null){
+	public function photos_editAlbum($aid, $title, $privacy = null, $comment_privacy = null, $description = null){
 		$params = array();
 		$params['aid'] = $aid;
 		$params['title'] = $title;
-		if($description !== null){ $params['description'] = $description;}
 		if($privacy !== null){ $params['privacy'] = $privacy;}
-		if($commentprivacy !== null){ $params['commentprivacy'] = $commentprivacy;}
+		if($comment_privacy !== null){ $params['comment_privacy'] = $comment_privacy;}
+		if($description !== null){ $params['description'] = $description;}
 		return VKDoc_ReturnValue::factory('photos_editAlbum',$this->Call('photos.editAlbum',$params));
 
 	}
 	/**
-	 * returns server address for [[Uploading Files to the VK Server Procedure|uploading photos]].
-	 * @param $aid mixed album ID to which photos are to be uploaded.
-	 * @param $savebig mixed if this parameter equals '1', then besides standard sizes, photos will be saved in large sizes – '807' and '1280' pixels wide. '0' by default.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getUploadServer
+	 * изменяет описание у выбранной фотографии.
+	 * @param $pid mixed ID фотографии, у которой необходимо изменить описание.
+	 * @param $owner_id mixed идентификатор пользователя (по умолчанию - текущий пользователь). Если передано отрицательное значение, вместо фотографии пользователя будет изменена фотография группы с идентификатором '-owner_id'.
+	 * @param $caption mixed новый текст описания к фотографии. Если параметр не задан, то считается, что он равен пустой строке.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_edit
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.edit
 	 */
-	public function photos_getUploadServer($aid, $savebig = null){
-		$params = array();
-		$params['aid'] = $aid;
-		if($savebig !== null){ $params['savebig'] = $savebig;}
-		return VKDoc_ReturnValue::factory('photos_getUploadServer',$this->Call('photos.getUploadServer',$params));
-
-	}
-	/**
-	 * saves photos after successful [[Uploading Files to the VK Server Procedure|upload]].
-	 * @param $caption mixed photo description.
-	 * @param $hash mixed parameter that returns as a result of uploading photos onto the server.
-	 * @param $photoslist mixed parameter that returns as a result of uploading photos onto the server.
-	 * @param $server mixed parameter that returns as a result of uploading photos onto the server.
-	 * @param $aid mixed album ID to which photos are to be uploaded.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_save
-	 */
-	public function photos_save($caption, $hash, $photoslist, $server, $aid){
-		$params = array();
-		$params['caption'] = $caption;
-		$params['hash'] = $hash;
-		$params['photoslist'] = $photoslist;
-		$params['server'] = $server;
-		$params['aid'] = $aid;
-		return VKDoc_ReturnValue::factory('photos_save',$this->Call('photos.save',$params));
-
-	}
-	/**
-	 * returns server address for [[Uploading Files to the VK Server Procedure|uploading photos to the page of a user]].
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getProfileUploadServer
-	 */
-	public function photos_getProfileUploadServer(){
-		$params = array();
-		return VKDoc_ReturnValue::factory('photos_getProfileUploadServer',$this->Call('photos.getProfileUploadServer',$params));
-
-	}
-	/**
-	 * saves a profile photo of a user after successful [[Uploading Files to the VK Server Procedure|upload]].
-	 * @param $hash mixed parameter that returns as a result of uploading photos onto the server.
-	 * @param $photo mixed parameter that returns as a result of uploading photos onto the server.
-	 * @param $server mixed parameter that returns as a result of uploading photos onto the server.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_saveProfilePhoto
-	 */
-	public function photos_saveProfilePhoto($hash, $photo, $server){
-		$params = array();
-		$params['hash'] = $hash;
-		$params['photo'] = $photo;
-		$params['server'] = $server;
-		return VKDoc_ReturnValue::factory('photos_saveProfilePhoto',$this->Call('photos.saveProfilePhoto',$params));
-
-	}
-	/**
-	 * moves a photo from one album to another.
-	 * @param $pid mixed id of the photo to be moved.
-	 * @param $targetaid mixed album id where the photo will be moved to.
-	 * @param $oid mixed user id of to whom the photo which is to be moved belongs (the current user by default).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_move
-	 */
-	public function photos_move($pid, $targetaid, $oid = null){
+	public function photos_edit($pid, $owner_id = null, $caption = null){
 		$params = array();
 		$params['pid'] = $pid;
-		$params['targetaid'] = $targetaid;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($caption !== null){ $params['caption'] = $caption;}
+		return VKDoc_ReturnValue::factory('photos_edit',$this->Call('photos.edit',$params));
+
+	}
+	/**
+	 * переносит фотографию из одного альбома в другой.
+	 * @param $pid mixed id переносимой фотографии.
+	 * @param $target_aid mixed id альбома, куда переносится фотография.
+	 * @param $oid mixed id владельца переносимой фотографии, по умолчанию id текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_move
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.move
+	 */
+	public function photos_move($pid, $target_aid, $oid = null){
+		$params = array();
+		$params['pid'] = $pid;
+		$params['target_aid'] = $target_aid;
 		if($oid !== null){ $params['oid'] = $oid;}
 		return VKDoc_ReturnValue::factory('photos_move',$this->Call('photos.move',$params));
 
 	}
 	/**
-	 * makes a photo the album cover.
-	 * @param $pid mixed id of the photo that is to be made the album cover.
-	 * @param $aid mixed album id.
-	 * @param $oid mixed user id to whom the album belongs (the current user by default).
+	 * делает фотографию обложкой альбома.
+	 * @param $pid mixed id фотографии, которая должна стать обложкой альбома.
+	 * @param $aid mixed id альбома.
+	 * @param $oid mixed id владельца альбома, по умолчанию id текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_makeCover
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.makeCover
 	 */
 	public function photos_makeCover($pid, $aid, $oid = null){
 		$params = array();
@@ -313,124 +453,354 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * changes the order of an album in the list of albums of a user.
-	 * @param $after mixed album ID after which the album ought to be inserted.
-	 * @param $before mixed album ID before which the album ought to be inserted.
-	 * @param $aid mixed album ID the order of which is to be changed.
-	 * @param $oid mixed user ID to whom the album belongs (the current user by default).
+	 * меняет порядок альбома в списке альбомов пользователя.
+	 * @param $aid mixed id альбома, порядок которого нужно изменить.
+	 * @param $before mixed id альбома, перед которым следует поместить альбом.
+	 * @param $after mixed id альбома, после которого следует поместить альбом.
+	 * @param $oid mixed id владельца альбома, по умолчанию id текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_reorderAlbums
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.reorderAlbums
 	 */
-	public function photos_reorderAlbums($after, $before, $aid, $oid = null){
+	public function photos_reorderAlbums($aid, $before, $after, $oid = null){
 		$params = array();
-		$params['after'] = $after;
-		$params['before'] = $before;
 		$params['aid'] = $aid;
+		$params['before'] = $before;
+		$params['after'] = $after;
 		if($oid !== null){ $params['oid'] = $oid;}
 		return VKDoc_ReturnValue::factory('photos_reorderAlbums',$this->Call('photos.reorderAlbums',$params));
 
 	}
 	/**
-	 * changes the order of photos in the list of photos in an album.
-	 * @param $after mixed photo id after which the photo is to be inserted.
-	 * @param $before mixed photo id before which the photo is to be inserted.
-	 * @param $pid mixed photo id the order of which is to be changed.
-	 * @param $oid mixed user id to whom the photo belongs (the current user by default).
+	 * меняет порядок фотографий в списке фотографий альбома.
+	 * @param $pid mixed id фотографии, порядок которой нужно изменить.
+	 * @param $before mixed id фотографии, перед которой следует поместить фотографию.
+	 * @param $after mixed id фотографии, после которой следует поместить фотографию.
+	 * @param $oid mixed id владельца фотографии, по умолчанию id текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_reorderPhotos
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.reorderPhotos
 	 */
-	public function photos_reorderPhotos($after, $before, $pid, $oid = null){
+	public function photos_reorderPhotos($pid, $before, $after, $oid = null){
 		$params = array();
-		$params['after'] = $after;
-		$params['before'] = $before;
 		$params['pid'] = $pid;
+		$params['before'] = $before;
+		$params['after'] = $after;
 		if($oid !== null){ $params['oid'] = $oid;}
 		return VKDoc_ReturnValue::factory('photos_reorderPhotos',$this->Call('photos.reorderPhotos',$params));
 
 	}
 	/**
-	 * returns the server address for uploading photos to a special album for wall photos.
-	 * @param $gid mixed ID of the group when uploading a photo to a group's wall.
-	 * @param $uid mixed ID of the user when uploading a photo to another user's wall.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getWallUploadServer
+	 * возвращает адрес сервера для загрузки фотографий.
+	 * @param $aid mixed ID альбома, в который необходимо загрузить фотографии.
+	 * @param $gid mixed ID группы, при загрузке фотографии в группу.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getUploadServer
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.getUploadServer
 	 */
-	public function photos_getWallUploadServer($gid = null, $uid = null){
+	public function photos_getUploadServer($aid, $gid = null){
 		$params = array();
+		$params['aid'] = $aid;
 		if($gid !== null){ $params['gid'] = $gid;}
+		return VKDoc_ReturnValue::factory('photos_getUploadServer',$this->Call('photos.getUploadServer',$params));
+
+	}
+	/**
+	 * сохраняет фотографии после успешной загрузки.
+	 * @param $aid mixed ID альбома, в который необходимо загрузить фотографии.
+	 * @param $server mixed параметр, возвращаемый в результате загрузки фотографий на сервер.
+	 * @param $photos_list mixed параметр, возвращаемый в результате загрузки фотографий на сервер.
+	 * @param $hash mixed параметр, возвращаемый в результате загрузки фотографий на сервер.
+	 * @param $gid mixed ID группы, при загрузке фотографии в группу.
+	 * @param $caption mixed Описание фотографии.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_save
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.save
+	 */
+	public function photos_save($aid, $server, $photos_list, $hash, $gid = null, $caption = null){
+		$params = array();
+		$params['aid'] = $aid;
+		$params['server'] = $server;
+		$params['photos_list'] = $photos_list;
+		$params['hash'] = $hash;
+		if($gid !== null){ $params['gid'] = $gid;}
+		if($caption !== null){ $params['caption'] = $caption;}
+		return VKDoc_ReturnValue::factory('photos_save',$this->Call('photos.save',$params));
+
+	}
+	/**
+	 * возвращает адрес сервера для загрузки фотографии на страницу пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getProfileUploadServer
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.getProfileUploadServer
+	 */
+	public function photos_getProfileUploadServer(){
+		$params = array();
+		return VKDoc_ReturnValue::factory('photos_getProfileUploadServer',$this->Call('photos.getProfileUploadServer',$params));
+
+	}
+	/**
+	 * сохраняет фотографию страницы пользователя после успешной загрузки.
+	 * @param $server mixed параметр, возвращаемый в результате загрузки фотографий на сервер.
+	 * @param $photo mixed параметр, возвращаемый в результате загрузки фотографий на сервер.
+	 * @param $hash mixed параметр, возвращаемый в результате загрузки фотографий на сервер.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_saveProfilePhoto
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.saveProfilePhoto
+	 */
+	public function photos_saveProfilePhoto($server, $photo, $hash){
+		$params = array();
+		$params['server'] = $server;
+		$params['photo'] = $photo;
+		$params['hash'] = $hash;
+		return VKDoc_ReturnValue::factory('photos_saveProfilePhoto',$this->Call('photos.saveProfilePhoto',$params));
+
+	}
+	/**
+	 * возвращает адрес сервера для загрузки фотографии в специальный альбом, предназначенный для фотографий со стены.
+	 * @param $uid mixed ID пользователя, при загрузке фотографии на стену другому пользователю.
+	 * @param $gid mixed ID группы, при загрузке фотографии на стену группы.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getWallUploadServer
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.getWallUploadServer
+	 */
+	public function photos_getWallUploadServer($uid = null, $gid = null){
+		$params = array();
 		if($uid !== null){ $params['uid'] = $uid;}
+		if($gid !== null){ $params['gid'] = $gid;}
 		return VKDoc_ReturnValue::factory('photos_getWallUploadServer',$this->Call('photos.getWallUploadServer',$params));
 
 	}
 	/**
-	 * saves a photo after a successful upload.
-	 * @param $server mixed a parameter returned as a result of uploading photos to the server.
-	 * @param $hash mixed a parameter returned as a result of uploading photos to the server.
-	 * @param $photo mixed a parameter returned as a result of uploading photos to the server.
-	 * @param $gid mixed ID of the group when uploading a photo to a group's wall.
-	 * @param $uid mixed ID of the user when uploading a photo to another user's wall.
+	 * сохраняет фотографию после успешной загрузки.
+	 * @param $server mixed параметр, возвращаемый в результате загрузки фотографий на сервер.
+	 * @param $photo mixed параметр, возвращаемый в результате загрузки фотографий на сервер.
+	 * @param $hash mixed параметр, возвращаемый в результате загрузки фотографий на сервер.
+	 * @param $uid mixed ID пользователя, при загрузке фотографии на стену другому пользователю.
+	 * @param $gid mixed ID группы, при загрузке фотографии на стену группы.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_saveWallPhoto
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.saveWallPhoto
 	 */
-	public function photos_saveWallPhoto($server, $hash, $photo, $gid = null, $uid = null){
+	public function photos_saveWallPhoto($server, $photo, $hash, $uid = null, $gid = null){
 		$params = array();
 		$params['server'] = $server;
-		$params['hash'] = $hash;
 		$params['photo'] = $photo;
-		if($gid !== null){ $params['gid'] = $gid;}
+		$params['hash'] = $hash;
 		if($uid !== null){ $params['uid'] = $uid;}
+		if($gid !== null){ $params['gid'] = $gid;}
 		return VKDoc_ReturnValue::factory('photos_saveWallPhoto',$this->Call('photos.saveWallPhoto',$params));
 
 	}
 	/**
-	 * returns server address for [[Uploading Files to the VK Server Procedure|uploading photos]] to a wall.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_getPhotoUploadServer
+	 * возвращает список записей со стены.
+	 * @param $owner_id mixed идентификатор пользователя (по умолчанию - текущий пользователь).
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества сообщений.
+	 * @param $count mixed количество сообщений, которое необходимо получить (но не более 100).
+	 * @param $filter mixed определяет, какие типы сообщений на стене необходимо получить. Возможны следующие значения параметра:'owner' -  сообщения на стене от ее владельца'others' - сообщения на стене не от ее владельца'all' - все сообщения на стенеЕсли параметр не задан, то считается, что он равен 'all'.
+	 * @param $extended mixed '1' - будут возвращены три массива 'wall', 'profiles', и 'groups'. По умолчанию дополнительные поля не возвращаются.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_get
+	 * @link http://vk.com/developers.php?oid=-1&p=wall.get
 	 */
-	public function wall_getPhotoUploadServer(){
+	public function wall_get($owner_id = null, $offset = null, $count = null, $filter = null, $extended = null){
 		$params = array();
-		return VKDoc_ReturnValue::factory('wall_getPhotoUploadServer',$this->Call('wall.getPhotoUploadServer',$params));
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		if($filter !== null){ $params['filter'] = $filter;}
+		if($extended !== null){ $params['extended'] = $extended;}
+		return VKDoc_ReturnValue::factory('wall_get',$this->Call('wall.get',$params));
 
 	}
 	/**
-	 * saves a post on the wall of a user.
-	 * @param $photoid mixed photo identifier that represents the id of the user that posted the photo, and the id of the photos itself, separated by an underscore. Example of the "photo_id" value: 6492_135055734
-	 * @param $message mixed message text that will be published on the user's wall.
-	 * @param $hash mixed parameter that is returned as a result of uploading an image to the server.
-	 * @param $photo mixed parameter that is returned as a result of uploading an image to the server.
-	 * @param $postid mixed ID of the post that contains characters from a to z and from 0 to 9. This parameter will be rendered to the application via flashVars when viewing or creating a post on a user's wall.
-	 * @param $server mixed parameter that is returned as a result of uploading an image to the server.
-	 * @param $wallid mixed user ID on whose wall the post will be published.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_savePost
+	 * получает комментарии к записи на стене пользователя.
+	 * @param $post_id mixed идентификатор записи на стене пользователя.
+	 * @param $owner_id mixed идентификатор пользователя, на чьей стене находится запись, к которой необходимо получить комментарии. Если параметр не задан, то он считается равным идентификатору текущего пользователя.
+	 * @param $sort mixed порядок сортировки комментариев:asc - хронологическийdesc - антихронологический
+	 * @param $need_likes mixed '1' - будет возвращено дополнительное поле 'likes'. По умолчанию поле 'likes' не возвращается.
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества комментариев.
+	 * @param $count mixed количество комментариев, которое необходимо получить (но не более 100).
+	 * @param $preview_length mixed Количество символов, по которому нужно обрезать комментарии. Укажите 0, если Вы не хотите обрезать комментарии. (по умолчанию 90). Обратите внимание, что комментарии обрезаются по словам.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_getComments
+	 * @link http://vk.com/developers.php?oid=-1&p=wall.getComments
 	 */
-	public function wall_savePost($photoid, $message, $hash, $photo, $postid, $server, $wallid){
+	public function wall_getComments($post_id, $owner_id = null, $sort = null, $need_likes = null, $offset = null, $count = null, $preview_length = null){
 		$params = array();
-		$params['photoid'] = $photoid;
-		$params['message'] = $message;
-		$params['hash'] = $hash;
-		$params['photo'] = $photo;
-		$params['postid'] = $postid;
-		$params['server'] = $server;
-		$params['wallid'] = $wallid;
-		return VKDoc_ReturnValue::factory('wall_savePost',$this->Call('wall.savePost',$params));
+		$params['post_id'] = $post_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($sort !== null){ $params['sort'] = $sort;}
+		if($need_likes !== null){ $params['need_likes'] = $need_likes;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		if($preview_length !== null){ $params['preview_length'] = $preview_length;}
+		return VKDoc_ReturnValue::factory('wall_getComments',$this->Call('wall.getComments',$params));
 
 	}
 	/**
-	 * returns a list of audio files of a user or a group.
-	 * @param $needuser mixed if this parameter equals '1' then the server will return standard data about the audio files' owner in the user (id, photo, name, name_gen) structure.
-	 * @param $aids mixed audio file IDs that are included into the selection by uid or gid, separated by a comma.
-	 * @param $gid mixed group ID to which the audio files belong. If the gid parameter is defined, uid is ignored.
-	 * @param $uid mixed user ID to whom the audio files belong (the current user by default).
+	 * получает записи со стен пользователей по их идентификаторам.
+	 * @param $posts mixed перечисленные через запятую идентификаторы, которые представляют собой идущие через знак подчеркивания id владельцев стен и id самих записей на стене.Пример значения posts:'93388_21539,93388_20904,2943_4276'
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_getById
+	 * @link http://vk.com/developers.php?oid=-1&p=wall.getById
+	 */
+	public function wall_getById($posts){
+		$params = array();
+		$params['posts'] = $posts;
+		return VKDoc_ReturnValue::factory('wall_getById',$this->Call('wall.getById',$params));
+
+	}
+	/**
+	 * добавляет запись на стену.
+	 * @param $owner_id mixed идентификатор пользователя, у которого должна быть опубликована запись. Если параметр не задан, то считается, что он равен идентификатору текущего пользователя.
+	 * @param $message mixed текст сообщения (является обязательным, если не задан параметр attachments)
+	 * @param $attachments mixed список объектов, приложенных к записи и разделённых символом '","'. Поле attachments представляется в формате:_,_ - тип медиа-приложения:photo - фотографияvideo - видеозаписьaudio - аудиозаписьdoc - документ - идентификатор владельца медиа-приложения - идентификатор медиа-приложения.Например:photo100172_166443618,photo66748_265827614
+	 * @param $lat mixed географическая широта отметки, заданная в градусах (от -90 до 90).
+	 * @param $long mixed географическая долгота отметки, заданная в градусах (от -180 до 180).
+	 * @param $place_id mixed идентификатор места, в котором отмечен пользователь
+	 * @param $services mixed Список сервисов или сайтов, на которые необходимо экспортировать статус, в случае если пользователь настроил соответствующую опцию. Например twitter, facebook.
+	 * @param $from_group mixed Данный параметр учитывается, если owner_id < 0 (статус публикуется на стене группы).  1 - статус будет опубликован от имени группы, 0 - статус будет опубликован от имени пользователя '(по умолчанию)'.
+	 * @param $signed mixed 1 - у статуса, размещенного от имени группы будет добавлена подпись (имя пользователя, разместившего запись), 0 - подписи добавлено не будет. Параметр учитывается только при публикации на стене группы и указании параметра 'from_group'. По умолчанию подпись не добавляется.
+	 * @param $friends_only mixed 1 - статус будет доступен только друзьям, 0 - всем пользователям. По умолчанию публикуемые статусы доступны всем пользователям.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_post
+	 * @link http://vk.com/developers.php?oid=-1&p=wall.post
+	 */
+	public function wall_post($owner_id = null, $message = null, $attachments = null, $lat = null, $long = null, $place_id = null, $services = null, $from_group = null, $signed = null, $friends_only = null){
+		$params = array();
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($message !== null){ $params['message'] = $message;}
+		if($attachments !== null){ $params['attachments'] = $attachments;}
+		if($lat !== null){ $params['lat'] = $lat;}
+		if($long !== null){ $params['long'] = $long;}
+		if($place_id !== null){ $params['place_id'] = $place_id;}
+		if($services !== null){ $params['services'] = $services;}
+		if($from_group !== null){ $params['from_group'] = $from_group;}
+		if($signed !== null){ $params['signed'] = $signed;}
+		if($friends_only !== null){ $params['friends_only'] = $friends_only;}
+		return VKDoc_ReturnValue::factory('wall_post',$this->Call('wall.post',$params));
+
+	}
+	/**
+	 * Получает информацию о пользователях которым нравится данная запись.
+	 * @param $post_id mixed идентификатор записи на стене пользователя.
+	 * @param $owner_id mixed идентификатор пользователя, на чьей стене находится запись. Если параметр не задан, то он считается равным идентификатору текущего пользователя.
+	 * @param $published_only mixed указывает, что необходимо вернуть информацию только пользователях, опубликовавших данную запись у себя на стене.
+	 * @param $friends_only mixed указывает, необходимо ли возвращать только пользователей, которые являются друзьями текущего пользователя. Параметр может принимать следующие значения:'0' – возвращать всех пользователей
+	 * @param $offset mixed смещение, относительно начала списка, для выборки определенного подмножества. Если параметр не задан, то считается, что он равен 0.
+	 * @param $count mixed количество возвращаемых идентификаторов пользователей.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_getLikes
+	 * @link http://vk.com/developers.php?oid=-1&p=wall.getLikes
+	 */
+	public function wall_getLikes($post_id, $owner_id = null, $published_only = null, $friends_only = null, $offset = null, $count = null){
+		$params = array();
+		$params['post_id'] = $post_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($published_only !== null){ $params['published_only'] = $published_only;}
+		if($friends_only !== null){ $params['friends_only'] = $friends_only;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		return VKDoc_ReturnValue::factory('wall_getLikes',$this->Call('wall.getLikes',$params));
+
+	}
+	/**
+	 * возвращает ленту новостей для текущего пользователя.
+	 * @param $source_ids mixed перечисленные через запятую иcточники новостей, новости от которых необходимо получить. Идентификаторы пользователей можно указывать в форматах  или uгде  - идентификатор друга пользователя.Идентификаторы групп можно указывать в форматах- или gгде  - идентификатор группы.Например, следующая строка1,-1,u10,g12904887указывает, что необходимо получить только новости друзей с идентификаторами 1 и 10, а также групп с идентификаторами 1 и 12904887.Если параметр не задан, то считается, что он включает список всех друзей и групп пользователя, за исключением скрытых источников, которые можно получить методом [[newsfeed.getBanned]].
+	 * @param $filters mixed перечисленные через запятую названия списков новостей, которые необходимо получить. В данный момент поддерживаются следующие списки новостей:post - новые записи со стенphoto - новые фотографииphoto_tag - новые отметки на фотографияхfriend - новые друзьяnote - новые заметкиЕсли параметр не задан, то будут получены все возможные списки новостей.
+	 * @param $start_time mixed время, в формате unixtime, начиная с которого следует получить новости для текущего пользователя. Если параметр не задан, то он считается равным значению времени, которое было сутки назад.
+	 * @param $end_time mixed время, в формате unixtime, до которого следует получить новости для текущего пользователя. Если параметр не задан, то он считается равным текущему времени.
+	 * @param $offset mixed указывает, начиная с какого элемента в данном промежутке времени необходимо получить новости. по умолчанию '0'.
+	 * @param $from mixed значение, полученное в поле 'new_from' при последней загруке новостей. Помогает избавляться от дубликатов при реализации автоподгрузки.
+	 * @param $count mixed указывает, какое максимальное число новостей следует возвращать, но не более 100. По умолчанию '50'. Для автоподгрузки Вы можете использовать возвращаемый данным методом параметр 'new_offset'.
+	 * @param $max_photos mixed Максимальное количество фотографий, информацию о которых необходимо вернуть. По умолчанию 5.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_newsfeed_get
+	 * @link http://vk.com/developers.php?oid=-1&p=newsfeed.get
+	 */
+	public function newsfeed_get($source_ids = null, $filters = null, $start_time = null, $end_time = null, $offset = null, $from = null, $count = null, $max_photos = null){
+		$params = array();
+		if($source_ids !== null){ $params['source_ids'] = $source_ids;}
+		if($filters !== null){ $params['filters'] = $filters;}
+		if($start_time !== null){ $params['start_time'] = $start_time;}
+		if($end_time !== null){ $params['end_time'] = $end_time;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($from !== null){ $params['from'] = $from;}
+		if($count !== null){ $params['count'] = $count;}
+		if($max_photos !== null){ $params['max_photos'] = $max_photos;}
+		return VKDoc_ReturnValue::factory('newsfeed_get',$this->Call('newsfeed.get',$params));
+
+	}
+	/**
+	 * осуществляет поиск по новостям.
+	 * @param $q mixed Поисковой запрос, по которому необходимо получить результаты.
+	 * @param $count mixed указывает, какое максимальное число записей следует возвращать, но не более 100.
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества результатов поиска.
+	 * @param $start_time mixed время, в формате unixtime, начиная с которого следует получить новости для текущего пользователя. Если параметр не задан, то он считается равным значению времени, которое было сутки назад.
+	 * @param $end_time mixed время, в формате unixtime, до которого следует получить новости для текущего пользователя. Если параметр не задан, то он считается равным текущему времени.
+	 * @param $start_id mixed Строковый id последней полученной записи. (Возвращается в результатах запроса, для того, чтобы исключить из выборки нового запроса уже полученные записи)
+	 * @param $extended mixed указывается '1' если необходимо получить информацию о пользователе или группе, разместившей запись. По умолчанию '0'.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_newsfeed_search
+	 * @link http://vk.com/developers.php?oid=-1&p=newsfeed.search
+	 */
+	public function newsfeed_search($q = null, $count = null, $offset = null, $start_time = null, $end_time = null, $start_id = null, $extended = null){
+		$params = array();
+		if($q !== null){ $params['q'] = $q;}
+		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($start_time !== null){ $params['start_time'] = $start_time;}
+		if($end_time !== null){ $params['end_time'] = $end_time;}
+		if($start_id !== null){ $params['start_id'] = $start_id;}
+		if($extended !== null){ $params['extended'] = $extended;}
+		return VKDoc_ReturnValue::factory('newsfeed_search',$this->Call('newsfeed.search',$params));
+
+	}
+	/**
+	 * возвращает список оповещений об ответах текущему пользователю.
+	 * @param $filters mixed перечисленные через запятую типы оповещений, которые необходимо получить. В данный момент поддерживаются следующие типы оповещений:wall - записи на стене пользователяmentions - упоминания в записях на стене, в комментариях или в обсужденияхcomments - комментарии к записям на стене, фотографиям и видеозаписямlikes - отметки "Мне нравится"reposts - скопированные у текущего пользователя записи на стене, фотографии и видеозаписиfollowers - новые подписчики
+	 * @param $start_time mixed время, в формате unixtime, начиная с которого следует получить оповещения для текущего пользователя. Если параметр не задан, то он считается равным значению времени, которое было сутки назад.
+	 * @param $end_time mixed время, в формате unixtime, до которого следует получить оповещения для текущего пользователя. Если параметр не задан, то он считается равным текущему времени.
+	 * @param $offset mixed смещение, начиная с которого следует вернуть список оповещений.
+	 * @param $count mixed указывает, какое максимальное число оповещений следует возвращать, но не более 100. По умолчанию 30.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notifications_get
+	 * @link http://vk.com/developers.php?oid=-1&p=notifications.get
+	 */
+	public function notifications_get($filters = null, $start_time = null, $end_time = null, $offset = null, $count = null){
+		$params = array();
+		if($filters !== null){ $params['filters'] = $filters;}
+		if($start_time !== null){ $params['start_time'] = $start_time;}
+		if($end_time !== null){ $params['end_time'] = $end_time;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		return VKDoc_ReturnValue::factory('notifications_get',$this->Call('notifications.get',$params));
+
+	}
+	/**
+	 * сбрасывает счетчик новых оповещений.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notifications_markAsViewed
+	 * @link http://vk.com/developers.php?oid=-1&p=notifications.markAsViewed
+	 */
+	public function notifications_markAsViewed(){
+		$params = array();
+		return VKDoc_ReturnValue::factory('notifications_markAsViewed',$this->Call('notifications.markAsViewed',$params));
+
+	}
+	/**
+	 * возвращает список аудиозаписей пользователя или группы.
+	 * @param $uid mixed id пользователя, которому принадлежат аудиозаписи (по умолчанию — текущий пользователь)
+	 * @param $gid mixed id группы, которой принадлежат аудиозаписи. Если указан параметр gid, uid игнорируется.
+	 * @param $album_id mixed id альбома, аудиозаписи которого необходимо вернуть (по умолчанию возвращаются аудиозаписи из всех альбомов).
+	 * @param $aids mixed перечисленные через запятую id аудиозаписей, входящие в выборку по uid или gid.
+	 * @param $need_user mixed если этот параметр равен 1, сервер возвратит базовую информацию о владельце аудиозаписей в структуре user (id, photo, name, name_gen).
+	 * @param $count mixed количество возвращаемых аудиозаписей.
+	 * @param $offset mixed смещение относительно первой найденной аудиозаписи для выборки определенного подмножества.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_get
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.get
 	 */
-	public function audio_get($needuser = null, $aids = null, $gid = null, $uid = null){
+	public function audio_get($uid = null, $gid = null, $album_id = null, $aids = null, $need_user = null, $count = null, $offset = null){
 		$params = array();
-		if($needuser !== null){ $params['needuser'] = $needuser;}
-		if($aids !== null){ $params['aids'] = $aids;}
-		if($gid !== null){ $params['gid'] = $gid;}
 		if($uid !== null){ $params['uid'] = $uid;}
+		if($gid !== null){ $params['gid'] = $gid;}
+		if($album_id !== null){ $params['album_id'] = $album_id;}
+		if($aids !== null){ $params['aids'] = $aids;}
+		if($need_user !== null){ $params['need_user'] = $need_user;}
+		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
 		return VKDoc_ReturnValue::factory('audio_get',$this->Call('audio.get',$params));
 
 	}
 	/**
-	 * returns information about audio files.
-	 * @param $audios mixed list of identifiers, separated by a comma, that represent two components separated by an underscore: a user's id, to whom the audio files belong, and the ids of the audio files themselves. If an audio file belongs to a group then the group -id will be used as the first parameter.Example of the "audios" value: '2_67859194,-683495_39822725,2_63937759'.
+	 * возвращает информацию об аудиозаписях по их идентификаторам.
+	 * @param $audios mixed перечисленные через запятую идентификаторы – идущие через знак подчеркивания id пользователей, которым принадлежат аудиозаписи, и id самих аудиозаписей. Если аудиозапись принадлежит группе, то в качестве первого параметра используется -id группы.Пример значения audios: '2_67859194,-683495_39822725,2_63937759'.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_getById
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.getById
 	 */
 	public function audio_getById($audios = null){
 		$params = array();
@@ -439,19 +809,33 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns audio file lyrics.
-	 * @param $lyricsid mixed ID of the audio file lyrics obtained using [[audio.get]], [[audio.getById]] or [[audio.search]].
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_getLyrics
+	 * возвращает количество аудиозаписей пользователя или группы.
+	 * @param $oid mixed id владельца аудиозаписей. Если необходимо получить количество аудиозаписей группы, в этом параметре должно стоять значение, равное -id группы.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_getCount
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.getCount
 	 */
-	public function audio_getLyrics($lyricsid = null){
+	public function audio_getCount($oid){
 		$params = array();
-		if($lyricsid !== null){ $params['lyricsid'] = $lyricsid;}
+		$params['oid'] = $oid;
+		return VKDoc_ReturnValue::factory('audio_getCount',$this->Call('audio.getCount',$params));
+
+	}
+	/**
+	 * возвращает текст аудиозаписи.
+	 * @param $lyrics_id mixed id текста аудиозаписи, полученный в [[audio.get]], [[audio.getById]] или [[audio.search]].
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_getLyrics
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.getLyrics
+	 */
+	public function audio_getLyrics($lyrics_id = null){
+		$params = array();
+		if($lyrics_id !== null){ $params['lyrics_id'] = $lyrics_id;}
 		return VKDoc_ReturnValue::factory('audio_getLyrics',$this->Call('audio.getLyrics',$params));
 
 	}
 	/**
-	 * returns server address for [[Uploading Files to the VK Server Procedure|uploading audio files]].
+	 * возвращает адрес сервера для [[Процесс_загрузки_файлов_на_сервер_ВКонтакте|загрузки аудиозаписей]].
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_getUploadServer
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.getUploadServer
 	 */
 	public function audio_getUploadServer(){
 		$params = array();
@@ -459,561 +843,566 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * saves audio files after a successful [[Uploading Files to the VK Server Procedure|upload]].
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $hash mixed parameter that is returned as a result of uploading an audio file to the server.
-	 * @param $server mixed parameter that is returned as a result of uploading an audio file to the server.
-	 * @param $audio mixed parameter that is returned as a result of uploading an audio file to the server.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @param $artist mixed song artist. By default it is taken from the ID3 tags.
-	 * @param $title mixed song title. By default it is taken from the ID3 tags.
+	 * сохраняет аудиозаписи после успешной [[Процесс_загрузки_файлов_на_сервер_ВКонтакте|загрузки]].
+	 * @param $server mixed параметр, возвращаемый в результате загрузки аудиофайла на сервер.
+	 * @param $audio mixed параметр, возвращаемый в результате загрузки аудиофайла на сервер.
+	 * @param $hash mixed параметр, возвращаемый в результате загрузки аудиофайла на сервер.
+	 * @param $artist mixed автор композиции. По умолчанию берется из ID3 тегов.
+	 * @param $title mixed название композиции. По умолчанию берется из ID3 тегов.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_save
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.save
 	 */
-	public function audio_save($apiid, $hash, $server, $audio, $v, $sig, $testmode = null, $format = null, $artist = null, $title = null){
+	public function audio_save($server, $audio, $hash, $artist = null, $title = null){
 		$params = array();
-		$params['apiid'] = $apiid;
-		$params['hash'] = $hash;
 		$params['server'] = $server;
 		$params['audio'] = $audio;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
+		$params['hash'] = $hash;
 		if($artist !== null){ $params['artist'] = $artist;}
 		if($title !== null){ $params['title'] = $title;}
 		return VKDoc_ReturnValue::factory('audio_save',$this->Call('audio.save',$params));
 
 	}
 	/**
-	 * performs audio file search.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $q mixed search query. For example, 'The Beatles'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $offset mixed offset that is relative to the first audio file found for selecting a certain subcollection.
-	 * @param $sort mixed sorting type. '1' - by audio file length, '0' - by date added.
-	 * @param $lyrics mixed if this parameter equals '1', the search will only be carried out on those audio files that contain lyrics.
-	 * @param $count mixed number of returning audio files (max. 200).
+	 * осуществляет поиск по аудиозаписям.
+	 * @param $q mixed строка поискового запроса. Например, 'The Beatles'.
+	 * @param $auto_complete mixed Если этот параметр равен '1', возможные ошибки в поисковом запросе будут исправлены. Например, при поисковом запросе 'Иуфдуы' поиск будет осуществляться по строке 'Beatles'.
+	 * @param $sort mixed Вид сортировки. '2' - по популярности, '1' - по длительности аудиозаписи, '0' - по дате добавления.
+	 * @param $lyrics mixed Если этот параметр равен '1', поиск будет производиться только по тем аудиозаписям, которые содержат тексты.
+	 * @param $count mixed количество возвращаемых аудиозаписей (максимум 200).
+	 * @param $offset mixed смещение относительно первой найденной аудиозаписи для выборки определенного подмножества.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_search
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.search
 	 */
-	public function audio_search($apiid, $v, $q, $sig, $format = null, $testmode = null, $offset = null, $sort = null, $lyrics = null, $count = null){
+	public function audio_search($q, $auto_complete = null, $sort = null, $lyrics = null, $count = null, $offset = null){
 		$params = array();
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
 		$params['q'] = $q;
-		$params['sig'] = $sig;
-		if($format !== null){ $params['format'] = $format;}
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($offset !== null){ $params['offset'] = $offset;}
+		if($auto_complete !== null){ $params['auto_complete'] = $auto_complete;}
 		if($sort !== null){ $params['sort'] = $sort;}
 		if($lyrics !== null){ $params['lyrics'] = $lyrics;}
 		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
 		return VKDoc_ReturnValue::factory('audio_search',$this->Call('audio.search',$params));
 
 	}
 	/**
-	 * copies an existing audio file to the page of a user or a group.
-	 * @param $oid mixed audio file owner ID. If the audio file to be copied is on the page of a group, this parameter should have the value equalling the group -id.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $aid mixed audio file ID.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $gid mixed ID of the group where the audio file should be copied to. If this parameter is not specified, then the audio file will not be copied into the group, but onto the page of the current user. If the file is, however, to be copied into a group, then the current user should have the rights to perform this operation
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
+	 * копирует существующую аудиозапись на страницу пользователя или группы.
+	 * @param $aid mixed id аудиозаписи.
+	 * @param $oid mixed id владельца аудиозаписи. Если копируемая аудиозапись находится на странице группы, в этом параметре должно стоять значение, равное -id группы.
+	 * @param $gid mixed id группы, в которую следует копировать аудиозапись. Если параметр не указан, аудиозапись копируется не в группу, а на страницу текущего пользователя. Если аудиозапись все же копируется в группу, у текущего пользователя должны быть права на эту операцию.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_add
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.add
 	 */
-	public function audio_add($oid, $apiid, $aid, $v, $sig, $testmode = null, $gid = null, $format = null){
+	public function audio_add($aid, $oid, $gid = null){
 		$params = array();
-		$params['oid'] = $oid;
-		$params['apiid'] = $apiid;
 		$params['aid'] = $aid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
+		$params['oid'] = $oid;
 		if($gid !== null){ $params['gid'] = $gid;}
-		if($format !== null){ $params['format'] = $format;}
 		return VKDoc_ReturnValue::factory('audio_add',$this->Call('audio.add',$params));
 
 	}
 	/**
-	 * deletes an audio file from a user's or group's page.
-	 * @param $oid mixed audio file owner ID. If the audio file to be deleted is on a group's page, then there should be a value in this parameter equalling the group -id.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $aid mixed audio file ID.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
+	 * удаляет аудиозапись со страницы пользователя или группы.
+	 * @param $aid mixed id аудиозаписи.
+	 * @param $oid mixed id владельца аудиозаписи. Если удаляемая аудиозапись находится на странице группы, в этом параметре должно стоять значение, равное -id группы.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_delete
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.delete
 	 */
-	public function audio_delete($oid, $apiid, $aid, $v, $sig, $testmode = null, $format = null){
+	public function audio_delete($aid, $oid){
 		$params = array();
-		$params['oid'] = $oid;
-		$params['apiid'] = $apiid;
 		$params['aid'] = $aid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
+		$params['oid'] = $oid;
 		return VKDoc_ReturnValue::factory('audio_delete',$this->Call('audio.delete',$params));
 
 	}
 	/**
-	 * edits an audio file of a user or a group.
-	 * @param $title mixed audio file title.
-	 * @param $text mixed audio file lyrics, if entered.
-	 * @param $nosearch mixed 1 - hides the audio file from the audio file search, 0 (by default) - does not hide.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $artist mixed audio file artist name.
-	 * @param $sig mixed request signature  [[Application Interaction with API
-	 * @param $oid mixed audio file owner ID. If the audio file to be deleted is on a group's page, then there should be a value in this parameter equalling the group -id.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $aid mixed audio file ID.
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
+	 * редактирует аудиозапись пользователя или группы.
+	 * @param $aid mixed id аудиозаписи.
+	 * @param $oid mixed id владельца аудиозаписи. Если редактируемая аудиозапись находится на странице группы, в этом параметре должно стоять значение, равное -id группы.
+	 * @param $artist mixed название исполнителя аудиозаписи.
+	 * @param $title mixed название аудиозаписи.
+	 * @param $text mixed текст аудиозаписи, если введен.
+	 * @param $no_search mixed 1 - скрывает аудиозапись из поиска по аудиозаписям, 0 (по умолчанию) - не скрывает.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_edit
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.edit
 	 */
-	public function audio_edit($title, $text, $nosearch, $apiid, $artist, $sig, $oid, $v, $aid, $testmode = null, $format = null){
+	public function audio_edit($aid, $oid, $artist, $title, $text, $no_search){
 		$params = array();
+		$params['aid'] = $aid;
+		$params['oid'] = $oid;
+		$params['artist'] = $artist;
 		$params['title'] = $title;
 		$params['text'] = $text;
-		$params['nosearch'] = $nosearch;
-		$params['apiid'] = $apiid;
-		$params['artist'] = $artist;
-		$params['sig'] = $sig;
-		$params['oid'] = $oid;
-		$params['v'] = $v;
-		$params['aid'] = $aid;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
+		$params['no_search'] = $no_search;
 		return VKDoc_ReturnValue::factory('audio_edit',$this->Call('audio.edit',$params));
 
 	}
 	/**
-	 * restores a deleted audio file of a user or a group.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $aid mixed ID of the deleted audio file.
-	 * @param $sig mixed request signature [[Application Interaction with APII
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $oid mixed ID of the audio file owner (the current user by default).
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
+	 * восстанавливает удаленную аудиозапись пользователя или группы.
+	 * @param $aid mixed id удаленной аудиозаписи.
+	 * @param $oid mixed id владельца аудиозаписи. По умолчанию - id текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_restore
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.restore
 	 */
-	public function audio_restore($apiid, $v, $aid, $sig, $testmode = null, $oid = null, $format = null){
+	public function audio_restore($aid, $oid = null){
 		$params = array();
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
 		$params['aid'] = $aid;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
 		if($oid !== null){ $params['oid'] = $oid;}
-		if($format !== null){ $params['format'] = $format;}
 		return VKDoc_ReturnValue::factory('audio_restore',$this->Call('audio.restore',$params));
 
 	}
 	/**
-	 * changes the order of audio files in the list of audio files of a user.
-	 * @param $after mixed audio file ID after which the audio file ought to be inserted. If the audio file is placed at the beginning, the parameter may equal 0.
-	 * @param $before mixed audio file ID before which the audio file ought to be inserted. If the audio file is placed at the end, the parameter may equal 0.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $aid mixed audio file ID to be reordered.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $oid mixed user ID to whom the audio file belongs (the current user by default).
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
+	 * изменяет порядок аудиозаписи в списке аудиозаписей пользователя.
+	 * @param $aid mixed id аудиозаписи, порядок которой изменяется.
+	 * @param $after mixed id аудиозаписи, после которой нужно поместить аудиозапись. Если аудиозапись переносится в начало, параметр может быть равен нулю.
+	 * @param $before mixed id аудиозаписи, перед которой нужно поместить аудиозапись. Если аудиозапись переносится в конец, параметр может быть равен нулю.
+	 * @param $oid mixed id владельца изменяемой аудиозаписи. По умолчанию - id текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_reorder
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.reorder
 	 */
-	public function audio_reorder($after, $before, $apiid, $aid, $sig, $v, $testmode = null, $oid = null, $format = null){
+	public function audio_reorder($aid, $after, $before, $oid = null){
 		$params = array();
+		$params['aid'] = $aid;
 		$params['after'] = $after;
 		$params['before'] = $before;
-		$params['apiid'] = $apiid;
-		$params['aid'] = $aid;
-		$params['sig'] = $sig;
-		$params['v'] = $v;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
 		if($oid !== null){ $params['oid'] = $oid;}
-		if($format !== null){ $params['format'] = $format;}
 		return VKDoc_ReturnValue::factory('audio_reorder',$this->Call('audio.reorder',$params));
 
 	}
 	/**
-	 * returns video information.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $offset mixed offset that is relative to the first video found for selecting a certain subcollection.
-	 * @param $uid mixed user ID whose videos need to be returned. If the videos parameter is specified, uid will be ignored.
-	 * @param $videos mixed list of identifiers, separated by a comma, that represent two components separated by an underscore: a user's id, to whom the videos belong, and the ids of the videos themselves. If a video belongs to a group then the group -id will be used as the first parameter.Example: '-4363_136089719,13245770_137352259'.
-	 * @param $width mixed required width of the video file picture in pixels. Possible values - '130', '160' (by default), '320'.
-	 * @param $count mixed the number of returning video files (max. 200).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_get
+	 * возвращает альбомы аудиозаписей пользователя или группы.
+	 * @param $uid mixed id пользователя, которому принадлежат аудиозаписи (по умолчанию — текущий пользователь)
+	 * @param $gid mixed id группы, которой принадлежат аудиозаписи. Если указан параметр gid, uid игнорируется.
+	 * @param $count mixed количество альбомов, которое необходимо вернуть. (по умолчанию – не больше '50', максимум - '100').
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества альбомов.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_getAlbums
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.getAlbums
 	 */
-	public function video_get($apiid, $v, $sig, $format = null, $testmode = null, $offset = null, $uid = null, $videos = null, $width = null, $count = null){
+	public function audio_getAlbums($uid = null, $gid = null, $count = null, $offset = null){
 		$params = array();
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($format !== null){ $params['format'] = $format;}
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($offset !== null){ $params['offset'] = $offset;}
 		if($uid !== null){ $params['uid'] = $uid;}
+		if($gid !== null){ $params['gid'] = $gid;}
+		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		return VKDoc_ReturnValue::factory('audio_getAlbums',$this->Call('audio.getAlbums',$params));
+
+	}
+	/**
+	 * создает альбом аудиозаписей пользователя или группы.
+	 * @param $title mixed название альбома.
+	 * @param $gid mixed id группы, которой принадлежат аудиозаписи. Если параметр не указан, то альбом создается у текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_addAlbum
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.addAlbum
+	 */
+	public function audio_addAlbum($title, $gid = null){
+		$params = array();
+		$params['title'] = $title;
+		if($gid !== null){ $params['gid'] = $gid;}
+		return VKDoc_ReturnValue::factory('audio_addAlbum',$this->Call('audio.addAlbum',$params));
+
+	}
+	/**
+	 * изменяет название альбома аудиозаписей пользователя или группы.
+	 * @param $title mixed новое название альбома.
+	 * @param $album_id mixed id редактируемого альбома.
+	 * @param $gid mixed id группы, которой принадлежат аудиозаписи. Если параметр не указан, то изменяется альбом текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_editAlbum
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.editAlbum
+	 */
+	public function audio_editAlbum($title, $album_id, $gid = null){
+		$params = array();
+		$params['title'] = $title;
+		$params['album_id'] = $album_id;
+		if($gid !== null){ $params['gid'] = $gid;}
+		return VKDoc_ReturnValue::factory('audio_editAlbum',$this->Call('audio.editAlbum',$params));
+
+	}
+	/**
+	 * удаляет альбом аудиозаписей пользователя или группы.
+	 * @param $album_id mixed id удаляемого альбома.
+	 * @param $gid mixed id группы, которой принадлежат аудиозаписи. Если параметр не указан, то альбом удаляется у текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_deleteAlbum
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.deleteAlbum
+	 */
+	public function audio_deleteAlbum($album_id, $gid = null){
+		$params = array();
+		$params['album_id'] = $album_id;
+		if($gid !== null){ $params['gid'] = $gid;}
+		return VKDoc_ReturnValue::factory('audio_deleteAlbum',$this->Call('audio.deleteAlbum',$params));
+
+	}
+	/**
+	 * перемещает в альбом аудиозаписи пользователя или группы.
+	 * @param $aids mixed id аудиозаписей, перечисленные через запятую.
+	 * @param $album_id mixed id альбома, в который перемещаются аудиозаписи.
+	 * @param $gid mixed id группы, которой принадлежат аудиозаписи. Если параметр не указан, то работа ведется с альбомом текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_audio_moveToAlbum
+	 * @link http://vk.com/developers.php?oid=-1&p=audio.moveToAlbum
+	 */
+	public function audio_moveToAlbum($aids, $album_id, $gid = null){
+		$params = array();
+		$params['aids'] = $aids;
+		$params['album_id'] = $album_id;
+		if($gid !== null){ $params['gid'] = $gid;}
+		return VKDoc_ReturnValue::factory('audio_moveToAlbum',$this->Call('audio.moveToAlbum',$params));
+
+	}
+	/**
+	 * Возвращает информацию о видеозаписях.
+	 * @param $videos mixed перечисленные через запятую идентификаторы – идущие через знак подчеркивания id пользователей, которым принадлежат видеозаписи, и id самих видеозаписей. Если видеозапись принадлежит группе, то в качестве первого параметра используется -id группы.Пример значения videos: '-4363_136089719,13245770_137352259'.
+	 * @param $uid mixed id пользователя, видеозаписи которого нужно вернуть. Если указан параметр videos, uid игнорируется.
+	 * @param $gid mixed id группы, видеозаписи которой нужно вернуть. Если указан параметр videos, gid игнорируется.
+	 * @param $aid mixed id альбома видеозаписи из которого нужно вернуть.
+	 * @param $width mixed требуемая ширина изображений видеозаписей в пикселах. Возможные значения - '130', '160' (по умолчанию), '320'.
+	 * @param $count mixed количество возвращаемых видеозаписей (максимум 200).
+	 * @param $offset mixed смещение относительно первой найденной видеозаписи для выборки определенного подмножества.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_get
+	 * @link http://vk.com/developers.php?oid=-1&p=video.get
+	 */
+	public function video_get($videos = null, $uid = null, $gid = null, $aid = null, $width = null, $count = null, $offset = null){
+		$params = array();
 		if($videos !== null){ $params['videos'] = $videos;}
+		if($uid !== null){ $params['uid'] = $uid;}
+		if($gid !== null){ $params['gid'] = $gid;}
+		if($aid !== null){ $params['aid'] = $aid;}
 		if($width !== null){ $params['width'] = $width;}
 		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
 		return VKDoc_ReturnValue::factory('video_get',$this->Call('video.get',$params));
 
 	}
+	public function video_edit(array $p){ return new VKDoc_ReturnValue($this->Call('video.edit',$p));} // ERROR: Getting advanced info failed. Check logs
+	public function video_add(array $p){ return new VKDoc_ReturnValue($this->Call('video.add',$p));} // ERROR: Getting advanced info failed. Check logs
+	public function video_delete(array $p){ return new VKDoc_ReturnValue($this->Call('video.delete',$p));} // ERROR: Getting advanced info failed. Check logs
 	/**
-	 * edits video data on a user's page.
-	 * @param $desc mixed video description.
-	 * @param $vid mixed video id.
-	 * @param $name mixed video title.
-	 * @param $oid mixed id of the video owner.
-	 * @param $privacycomment mixed video commenting privacy according to the [[Privacy Format
-	 * @param $privacyview mixed video viewing privacy according to the [[Privacy Format
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_edit
-	 */
-	public function video_edit($desc, $vid, $name, $oid, $privacycomment = null, $privacyview = null){
-		$params = array();
-		$params['desc'] = $desc;
-		$params['vid'] = $vid;
-		$params['name'] = $name;
-		$params['oid'] = $oid;
-		if($privacycomment !== null){ $params['privacycomment'] = $privacycomment;}
-		if($privacyview !== null){ $params['privacyview'] = $privacyview;}
-		return VKDoc_ReturnValue::factory('video_edit',$this->Call('video.edit',$params));
-
-	}
-	/**
-	 * copies a video to a user's page.
-	 * @param $oid mixed user ID to whom the video belongs.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $vid mixed video ID.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_add
-	 */
-	public function video_add($oid, $apiid, $vid, $v, $sig, $testmode = null, $format = null){
-		$params = array();
-		$params['oid'] = $oid;
-		$params['apiid'] = $apiid;
-		$params['vid'] = $vid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
-		return VKDoc_ReturnValue::factory('video_add',$this->Call('video.add',$params));
-
-	}
-	/**
-	 * deletes a video from a user's page.
-	 * @param $oid mixed user ID to whom the video belongs.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $vid mixed video ID.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_delete
-	 */
-	public function video_delete($oid, $apiid, $vid, $v, $sig, $testmode = null, $format = null){
-		$params = array();
-		$params['oid'] = $oid;
-		$params['apiid'] = $apiid;
-		$params['vid'] = $vid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
-		return VKDoc_ReturnValue::factory('video_delete',$this->Call('video.delete',$params));
-
-	}
-	/**
-	 * returns a list of videos according to the specified search criteria.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $q mixed search query. For example, 'The Beatles'.
-	 * @param $sig mixed request signature  [[Application Interaction with API
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $offset mixed offset, relative to the first video found for selecting a certain subcollection.
-	 * @param $sort mixed sorting type. '1' - by video length, '0' - by date added.
-	 * @param $hd mixed If this does not equal zero, then the search will be carried out only on videos that support HD.
-	 * @param $count mixed number of returning videos (max. 200).
+	 * возвращает список видеозаписей в соответствии с заданным критерием поиска.
+	 * @param $q mixed строка поискового запроса. Например, 'The Beatles'.
+	 * @param $sort mixed Вид сортировки. '0' - по дате добавления видеозаписи, '1' - по длительности, '2' - по релевантности.
+	 * @param $hd mixed Если не равен нулю, то поиск производится только по видеозаписям высокого качества.
+	 * @param $count mixed количество возвращаемых видеозаписей (максимум 200).
+	 * @param $offset mixed смещение относительно первой найденной видеозаписи для выборки определенного подмножества.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_search
+	 * @link http://vk.com/developers.php?oid=-1&p=video.search
 	 */
-	public function video_search($apiid, $v, $q, $sig, $format = null, $testmode = null, $offset = null, $sort = null, $hd = null, $count = null){
+	public function video_search($q, $sort = null, $hd = null, $count = null, $offset = null){
 		$params = array();
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
 		$params['q'] = $q;
-		$params['sig'] = $sig;
-		if($format !== null){ $params['format'] = $format;}
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($offset !== null){ $params['offset'] = $offset;}
 		if($sort !== null){ $params['sort'] = $sort;}
 		if($hd !== null){ $params['hd'] = $hd;}
 		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
 		return VKDoc_ReturnValue::factory('video_search',$this->Call('video.search',$params));
 
 	}
 	/**
-	 * returns a list of videos that a user has been tagged in.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @param $uid mixed user ID (the current user by default).
-	 * @param $offset mixed offset that is required for the selection of a certain subcollection of videos.
-	 * @param $count mixed number of videos required to obtain (max. 100).
+	 * возвращает список видеозаписей, на которых отмечен пользователь.
+	 * @param $uid mixed идентификатор пользователя (по умолчанию - текущий пользователь).
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества видеозаписей.
+	 * @param $count mixed количество видеозаписей, которое необходимо получить (но не более 100).
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_getUserVideos
+	 * @link http://vk.com/developers.php?oid=-1&p=video.getUserVideos
 	 */
-	public function video_getUserVideos($apiid, $v, $sig, $testmode = null, $format = null, $uid = null, $offset = null, $count = null){
+	public function video_getUserVideos($uid = null, $offset = null, $count = null){
 		$params = array();
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
 		if($uid !== null){ $params['uid'] = $uid;}
 		if($offset !== null){ $params['offset'] = $offset;}
 		if($count !== null){ $params['count'] = $count;}
 		return VKDoc_ReturnValue::factory('video_getUserVideos',$this->Call('video.getUserVideos',$params));
 
 	}
+	public function video_getComments(array $p){ return new VKDoc_ReturnValue($this->Call('video.getComments',$p));} // ERROR: Getting advanced info failed. Check logs
 	/**
-	 * returns a list of comments to a video.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $vid mixed video ID.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @param $ownerid mixed user ID to whom the video belongs (the current user by default).
-	 * @param $offset mixed offset that is required for the selection of a certain subcollection of comments.
-	 * @param $count mixed number of comments required to obtain (max. 100).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_getComments
-	 */
-	public function video_getComments($apiid, $vid, $v, $sig, $testmode = null, $format = null, $ownerid = null, $offset = null, $count = null){
-		$params = array();
-		$params['apiid'] = $apiid;
-		$params['vid'] = $vid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		if($offset !== null){ $params['offset'] = $offset;}
-		if($count !== null){ $params['count'] = $count;}
-		return VKDoc_ReturnValue::factory('video_getComments',$this->Call('video.getComments',$params));
-
-	}
-	/**
-	 * creates a new comment to a video.
-	 * @param $message mixed comment text (at least 2 characters long).
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $vid mixed video ID.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @param $ownerid mixed user ID to whom the video belongs (the current user by default).
+	 * создает новый комментарий к видеозаписи.
+	 * @param $vid mixed идентификатор видеозаписи.
+	 * @param $message mixed текст комментария (минимальная длина - 2 символа).
+	 * @param $owner_id mixed идентификатор пользователя (по умолчанию - текущий пользователь).
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_createComment
+	 * @link http://vk.com/developers.php?oid=-1&p=video.createComment
 	 */
-	public function video_createComment($message, $apiid, $vid, $v, $sig, $testmode = null, $format = null, $ownerid = null){
+	public function video_createComment($vid, $message, $owner_id = null){
 		$params = array();
-		$params['message'] = $message;
-		$params['apiid'] = $apiid;
 		$params['vid'] = $vid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		$params['message'] = $message;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('video_createComment',$this->Call('video.createComment',$params));
 
 	}
 	/**
-	 * edits the text of a comment to a video.
-	 * @param $id mixed comment ID.
-	 * @param $message mixed comment text (at least 2 characters long).
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $ownerid mixed user ID to whom the video belongs (the current user by default).
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
+	 * изменяет текст комментария к видеозаписи.
+	 * @param $cid mixed идентификатор комментария.
+	 * @param $message mixed текст комментария (минимальная длина - 2 символа).
+	 * @param $owner_id mixed идентификатор пользователя (по умолчанию - текущий пользователь).
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_editComment
+	 * @link http://vk.com/developers.php?oid=-1&p=video.editComment
 	 */
-	public function video_editComment($id, $message, $apiid, $v, $sig, $testmode = null, $ownerid = null, $format = null){
+	public function video_editComment($cid, $message, $owner_id = null){
 		$params = array();
-		$params['id'] = $id;
+		$params['cid'] = $cid;
 		$params['message'] = $message;
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		if($format !== null){ $params['format'] = $format;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('video_editComment',$this->Call('video.editComment',$params));
 
 	}
 	/**
-	 * deletes a comment to a video.
-	 * @param $cid mixed comment ID.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $ownerid mixed user ID to whom the video belongs (the current user by default).
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
+	 * удаляет комментарий к видеозаписи.
+	 * @param $cid mixed идентификатор комментария.
+	 * @param $owner_id mixed идентификатор пользователя (по-умолчанию - текущий пользователь).
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_deleteComment
+	 * @link http://vk.com/developers.php?oid=-1&p=video.deleteComment
 	 */
-	public function video_deleteComment($cid, $apiid, $v, $sig, $testmode = null, $ownerid = null, $format = null){
+	public function video_deleteComment($cid, $owner_id = null){
 		$params = array();
 		$params['cid'] = $cid;
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		if($format !== null){ $params['format'] = $format;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('video_deleteComment',$this->Call('video.deleteComment',$params));
 
 	}
 	/**
-	 * returns a list of tags in a video.
-	 * @param $vid mixed video ID.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $ownerid mixed user ID to whom the video belongs (the current user by default).
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
+	 * возвращает список отметок на видеозаписи.
+	 * @param $vid mixed идентификатор видеозаписи.
+	 * @param $owner_id mixed идентификатор пользователя (по умолчанию - текущий пользователь).
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_getTags
+	 * @link http://vk.com/developers.php?oid=-1&p=video.getTags
 	 */
-	public function video_getTags($vid, $apiid, $v, $sig, $testmode = null, $ownerid = null, $format = null){
+	public function video_getTags($vid, $owner_id = null){
 		$params = array();
 		$params['vid'] = $vid;
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		if($format !== null){ $params['format'] = $format;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('video_getTags',$this->Call('video.getTags',$params));
 
 	}
 	/**
-	 * adds a tag to a video.
-	 * @param $vid mixed video ID.
-	 * @param $uid mixed ID of the user who is to be tagged in a video.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $ownerid mixed user ID to whom the video belongs (the current user by default).
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
+	 * добавляет отметку на видеозапись.
+	 * @param $vid mixed идентификатор видеозаписи.
+	 * @param $uid mixed идентификатор пользователя, которого нужно отметить на видеозаписи.
+	 * @param $owner_id mixed идентификатор владельца видеозаписи (по умолчанию - текущий пользователь).
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_putTag
+	 * @link http://vk.com/developers.php?oid=-1&p=video.putTag
 	 */
-	public function video_putTag($vid, $uid, $apiid, $v, $sig, $testmode = null, $ownerid = null, $format = null){
+	public function video_putTag($vid, $uid, $owner_id = null){
 		$params = array();
 		$params['vid'] = $vid;
 		$params['uid'] = $uid;
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		if($format !== null){ $params['format'] = $format;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('video_putTag',$this->Call('video.putTag',$params));
 
 	}
 	/**
-	 * deletes a video tag.
-	 * @param $vid mixed video ID.
-	 * @param $tagid mixed ID of the tag that needs to be deleted.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $ownerid mixed user ID to whom the video belongs (the current user by default).
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
+	 * удаляет отметку с видеозаписи.
+	 * @param $vid mixed идентификатор видеозаписи.
+	 * @param $tag_id mixed идентификатор отметки, которую нужно удалить.
+	 * @param $owner_id mixed идентификатор владельца видеозаписи (по умолчанию - текущий пользователь).
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_removeTag
+	 * @link http://vk.com/developers.php?oid=-1&p=video.removeTag
 	 */
-	public function video_removeTag($vid, $tagid, $apiid, $v, $sig, $testmode = null, $ownerid = null, $format = null){
+	public function video_removeTag($vid, $tag_id, $owner_id = null){
 		$params = array();
 		$params['vid'] = $vid;
-		$params['tagid'] = $tagid;
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		if($format !== null){ $params['format'] = $format;}
+		$params['tag_id'] = $tag_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('video_removeTag',$this->Call('video.removeTag',$params));
 
 	}
 	/**
-	 * returns data required for [[Uploading Files to the VK Server Procedure|uploading videos]] and also video data.
-	 * @param $privacycomment mixed video commenting privacy according to the [[Privacy Format
-	 * @param $privacyview mixed video viewing privacy according to the [[Privacy Format
-	 * @param $gid mixed The group to which the video will be saved. By default, the video file will be saved to the user's profile.
-	 * @param $description mixed video description.
-	 * @param $name mixed video title.
+	 * возвращает данные, необходимые для [[Процесс_загрузки_файлов_на_сервер_ВКонтакте|загрузки видеозаписей]], а также данные видеозаписи.
+	 * @param $name mixed название видеофайла.
+	 * @param $description mixed описание видеофайла.
+	 * @param $gid mixed Группа, в которую будет сохранён видеофайл. По умолчанию видеофайл сохраняется на страницу пользователя.
+	 * @param $privacy_view mixed приватность на просмотр видео в соответствии с [[Формат приватности
+	 * @param $privacy_comment mixed приватность на комментирование видео в соответствии с [[Формат приватности
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_save
+	 * @link http://vk.com/developers.php?oid=-1&p=video.save
 	 */
-	public function video_save($privacycomment = null, $privacyview = null, $gid = null, $description = null, $name = null){
+	public function video_save($name = null, $description = null, $gid = null, $privacy_view = null, $privacy_comment = null){
 		$params = array();
-		if($privacycomment !== null){ $params['privacycomment'] = $privacycomment;}
-		if($privacyview !== null){ $params['privacyview'] = $privacyview;}
-		if($gid !== null){ $params['gid'] = $gid;}
-		if($description !== null){ $params['description'] = $description;}
 		if($name !== null){ $params['name'] = $name;}
+		if($description !== null){ $params['description'] = $description;}
+		if($gid !== null){ $params['gid'] = $gid;}
+		if($privacy_view !== null){ $params['privacy_view'] = $privacy_view;}
+		if($privacy_comment !== null){ $params['privacy_comment'] = $privacy_comment;}
 		return VKDoc_ReturnValue::factory('video_save',$this->Call('video.save',$params));
 
 	}
 	/**
-	 * creates a new place.
-	 * @param $title mixed new place title.
-	 * @param $longitude mixed geographical longitude of the new place, set in degrees (from -180 to 180).
-	 * @param $type mixed the new place's type identifier, obtained by the [[places.getTypes]] method.
-	 * @param $latitude mixed geographical latitude of the new place, set in degrees (from -90 to 90).
-	 * @param $address mixed new place's address (for example, 'Nevsky ave, 1').
-	 * @param $country mixed the new place's country identifier, obtained by the [[places.getCountries]] method.
-	 * @param $city mixed the new place's city identifier, obtained by the [[places.getCities]] method.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_places_add
+	 * возвращает альбомы видеозаписей пользователя или группы.
+	 * @param $uid mixed id пользователя, которому принадлежат видеозаписи (по умолчанию — текущий пользователь)
+	 * @param $gid mixed id группы, которой принадлежат видеозаписи. Если указан параметр gid, uid игнорируется.
+	 * @param $count mixed количество альбомов, которое необходимо вернуть. (по умолчанию – не больше '50', максимум - '100').
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества альбомов.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_getAlbums
+	 * @link http://vk.com/developers.php?oid=-1&p=video.getAlbums
 	 */
-	public function places_add($title, $longitude, $type, $latitude, $address = null, $country = null, $city = null){
+	public function video_getAlbums($uid = null, $gid = null, $count = null, $offset = null){
+		$params = array();
+		if($uid !== null){ $params['uid'] = $uid;}
+		if($gid !== null){ $params['gid'] = $gid;}
+		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		return VKDoc_ReturnValue::factory('video_getAlbums',$this->Call('video.getAlbums',$params));
+
+	}
+	/**
+	 * создает альбом видеозаписей пользователя или группы.
+	 * @param $title mixed название альбома.
+	 * @param $gid mixed id группы, которой принадлежат видеозаписи. Если параметр не указан, то альбом создается у текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_addAlbum
+	 * @link http://vk.com/developers.php?oid=-1&p=video.addAlbum
+	 */
+	public function video_addAlbum($title, $gid = null){
 		$params = array();
 		$params['title'] = $title;
+		if($gid !== null){ $params['gid'] = $gid;}
+		return VKDoc_ReturnValue::factory('video_addAlbum',$this->Call('video.addAlbum',$params));
+
+	}
+	/**
+	 * изменяет название альбома видеозаписей пользователя или группы.
+	 * @param $title mixed новое название альбома.
+	 * @param $album_id mixed id редактируемого альбома.
+	 * @param $gid mixed id группы, которой принадлежат видеозаписи. Если параметр не указан, то изменяется альбом текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_editAlbum
+	 * @link http://vk.com/developers.php?oid=-1&p=video.editAlbum
+	 */
+	public function video_editAlbum($title, $album_id, $gid = null){
+		$params = array();
+		$params['title'] = $title;
+		$params['album_id'] = $album_id;
+		if($gid !== null){ $params['gid'] = $gid;}
+		return VKDoc_ReturnValue::factory('video_editAlbum',$this->Call('video.editAlbum',$params));
+
+	}
+	/**
+	 * удаляет альбом видеозаписей пользователя или группы.
+	 * @param $album_id mixed id удаляемого альбома.
+	 * @param $gid mixed id группы, которой принадлежат видеозаписи. Если параметр не указан, то альбом удаляется у текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_deleteAlbum
+	 * @link http://vk.com/developers.php?oid=-1&p=video.deleteAlbum
+	 */
+	public function video_deleteAlbum($album_id, $gid = null){
+		$params = array();
+		$params['album_id'] = $album_id;
+		if($gid !== null){ $params['gid'] = $gid;}
+		return VKDoc_ReturnValue::factory('video_deleteAlbum',$this->Call('video.deleteAlbum',$params));
+
+	}
+	/**
+	 * перемещает в альбом видеозаписи пользователя или группы.
+	 * @param $vids mixed id видеозаписей, перечисленные через запятую.
+	 * @param $album_id mixed id альбома, в который перемещаются видеозаписи.
+	 * @param $gid mixed id группы, которой принадлежат видеозаписи. Если параметр не указан, то работа ведется с альбомом текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_video_moveToAlbum
+	 * @link http://vk.com/developers.php?oid=-1&p=video.moveToAlbum
+	 */
+	public function video_moveToAlbum($vids, $album_id, $gid = null){
+		$params = array();
+		$params['vids'] = $vids;
+		$params['album_id'] = $album_id;
+		if($gid !== null){ $params['gid'] = $gid;}
+		return VKDoc_ReturnValue::factory('video_moveToAlbum',$this->Call('video.moveToAlbum',$params));
+
+	}
+	/**
+	 * Возвращает информацию о документах текущего пользователя или группы.
+	 * @param $oid mixed id пользователя или группы, документы которого нужно вернуть. По умолчанию – id текущего пользователя. Если необходимо получить документы группы, в этом параметре должно стоять значение, равное -id группы.
+	 * @param $count mixed количество документов, которое нужно вернуть. (по умолчанию – 'все документы')
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества документов.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_docs_get
+	 * @link http://vk.com/developers.php?oid=-1&p=docs.get
+	 */
+	public function docs_get($oid = null, $count = null, $offset = null){
+		$params = array();
+		if($oid !== null){ $params['oid'] = $oid;}
+		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		return VKDoc_ReturnValue::factory('docs_get',$this->Call('docs.get',$params));
+
+	}
+	/**
+	 * Возвращает информацию о документах текущего пользователя по их id.
+	 * @param $docs mixed перечисленные через запятую идентификаторы – идущие через знак подчеркивания id пользователей, которым принадлежат документы, и id самих документов. &#60;!--Если документ принадлежит группе, то в качестве первого параметра используется -id группы.--&#62;Пример значения docs: '66748_91488,66748_91455'.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_docs_getById
+	 * @link http://vk.com/developers.php?oid=-1&p=docs.getById
+	 */
+	public function docs_getById($docs = null){
+		$params = array();
+		if($docs !== null){ $params['docs'] = $docs;}
+		return VKDoc_ReturnValue::factory('docs_getById',$this->Call('docs.getById',$params));
+
+	}
+	/**
+	 * возвращает адрес сервера для [[Процесс_загрузки_файлов_на_сервер_ВКонтакте|загрузки документов]].
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_docs_getUploadServer
+	 * @link http://vk.com/developers.php?oid=-1&p=docs.getUploadServer
+	 */
+	public function docs_getUploadServer(){
+		$params = array();
+		return VKDoc_ReturnValue::factory('docs_getUploadServer',$this->Call('docs.getUploadServer',$params));
+
+	}
+	/**
+	 * возвращает адрес сервера для [[Процесс_загрузки_файлов_на_сервер_ВКонтакте|загрузки документов]] и последующей отправки их на стену.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_docs_getWallUploadServer
+	 * @link http://vk.com/developers.php?oid=-1&p=docs.getWallUploadServer
+	 */
+	public function docs_getWallUploadServer(){
+		$params = array();
+		return VKDoc_ReturnValue::factory('docs_getWallUploadServer',$this->Call('docs.getWallUploadServer',$params));
+
+	}
+	/**
+	 * Удаляет документ пользователя или группы.
+	 * @param $did mixed id документа.
+	 * @param $oid mixed id владельца документы. Если удаляемый документ находится на странице группы, в этом параметре должно стоять значение, равное -id группы.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_docs_delete
+	 * @link http://vk.com/developers.php?oid=-1&p=docs.delete
+	 */
+	public function docs_delete($did, $oid){
+		$params = array();
+		$params['did'] = $did;
+		$params['oid'] = $oid;
+		return VKDoc_ReturnValue::factory('docs_delete',$this->Call('docs.delete',$params));
+
+	}
+	/**
+	 * Cохраняет загруженные документы.
+	 * @param $file mixed Параметр, возвращаемый в результате загрузки файла на сервер.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_docs_save
+	 * @link http://vk.com/developers.php?oid=-1&p=docs.save
+	 */
+	public function docs_save($file){
+		$params = array();
+		$params['file'] = $file;
+		return VKDoc_ReturnValue::factory('docs_save',$this->Call('docs.save',$params));
+
+	}
+	/**
+	 * создает новое место.
+	 * @param $title mixed название нового места.
+	 * @param $latitude mixed географическая широта нового места, заданная в градусах (от -90 до 90).
+	 * @param $longitude mixed географическая долгота нового места, заданная в градусах (от -180 до 180).
+	 * @param $type mixed идентификатор типа нового места, полученный методом [[places.getTypes]].
+	 * @param $country mixed идентификатор страны нового места, полученный методом [[places.getCountries]].
+	 * @param $city mixed идентификатор города нового места, полученный методом [[places.getCities]].
+	 * @param $address mixed строка с адресом нового места (например, 'Невский просп. 1').
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_places_add
+	 * @link http://vk.com/developers.php?oid=-1&p=places.add
+	 */
+	public function places_add($title, $latitude, $longitude, $type, $country = null, $city = null, $address = null){
+		$params = array();
+		$params['title'] = $title;
+		$params['latitude'] = $latitude;
 		$params['longitude'] = $longitude;
 		$params['type'] = $type;
-		$params['latitude'] = $latitude;
-		if($address !== null){ $params['address'] = $address;}
 		if($country !== null){ $params['country'] = $country;}
 		if($city !== null){ $params['city'] = $city;}
+		if($address !== null){ $params['address'] = $address;}
 		return VKDoc_ReturnValue::factory('places_add',$this->Call('places.add',$params));
 
 	}
 	/**
-	 * returns places information.
-	 * @param $places mixed place identifiers, separated by a comma.places value example:1,2,3,4,5
+	 * возвращает информацию о местах.
+	 * @param $places mixed перечисленные через запятую идентификаторы мест.Пример значения places:1,2,3,4,5
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_places_getById
+	 * @link http://vk.com/developers.php?oid=-1&p=places.getById
 	 */
 	public function places_getById($places = null){
 		$params = array();
@@ -1022,69 +1411,77 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns a list of found places.
-	 * @param $latitude mixed geographical latitude of the point in the radius of which search should be carried out, set in degrees (from -90 to 90).
-	 * @param $longitude mixed geographical longitude of the point in the radius of which search should be carried out, set in degrees (from -180 to 180).
-	 * @param $radius mixed search zone radius type (from 1 to 4)1 - 100 meters2 - 800 meters3 - 6 kilometers4 - 50 kilometers
-	 * @param $q mixed search query string.
+	 * возвращает список найденных мест.
+	 * @param $latitude mixed географическая широта точки, в радиусе которой необходимо производить поиск, заданная в градусах (от -90 до 90).
+	 * @param $longitude mixed географическая долгота точки, в радиусе которой необходимо производить поиск, заданная в градусах (от -180 до 180).
+	 * @param $q mixed строка поискового запроса.
+	 * @param $radius mixed тип радиуса зоны поиска (от 1 до 4)1 - 100 метров2 - 800 метров3 - 6 километров4 - 50 километров
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_places_search
+	 * @link http://vk.com/developers.php?oid=-1&p=places.search
 	 */
-	public function places_search($latitude, $longitude, $radius = null, $q = null){
+	public function places_search($latitude, $longitude, $q = null, $radius = null){
 		$params = array();
 		$params['latitude'] = $latitude;
 		$params['longitude'] = $longitude;
-		if($radius !== null){ $params['radius'] = $radius;}
 		if($q !== null){ $params['q'] = $q;}
+		if($radius !== null){ $params['radius'] = $radius;}
 		return VKDoc_ReturnValue::factory('places_search',$this->Call('places.search',$params));
 
 	}
 	/**
-	 * checks a person in to a specific place.
-	 * @param $placeid mixed place identifier.
-	 * @param $longitude mixed geographical longitude of the check-in, set in degrees (from -180 to 180).
-	 * @param $text mixed comment to the check-in, 255 characters in length (line break is not supported).
-	 * @param $latitude mixed geographical latitude of the check-in, set in degrees (from -90 to 90).
+	 * отмечает пользователя в указанном месте.
+	 * @param $place_id mixed идентификатор места.
+	 * @param $text mixed комментарий к отметке длиной до 255 символов (переводы строк не поддерживаются).
+	 * @param $latitude mixed географическая широта отметки, заданная в градусах (от -90 до 90).
+	 * @param $longitude mixed географическая долгота отметки, заданная в градусах (от -180 до 180).
+	 * @param $services mixed Список сервисов или сайтов, на которые необходимо экспортировать отметку, в случае если пользователь настроил соответствующую опцию. Например twitter, facebook.
+	 * @param $friends_only mixed 1 - отметка будет доступна только друзьям, 0 - всем пользователям. По умолчанию публикуемые отметки доступны всем пользователям.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_places_checkin
+	 * @link http://vk.com/developers.php?oid=-1&p=places.checkin
 	 */
-	public function places_checkin($placeid, $longitude = null, $text = null, $latitude = null){
+	public function places_checkin($place_id, $text = null, $latitude = null, $longitude = null, $services = null, $friends_only = null){
 		$params = array();
-		$params['placeid'] = $placeid;
-		if($longitude !== null){ $params['longitude'] = $longitude;}
+		$params['place_id'] = $place_id;
 		if($text !== null){ $params['text'] = $text;}
 		if($latitude !== null){ $params['latitude'] = $latitude;}
+		if($longitude !== null){ $params['longitude'] = $longitude;}
+		if($services !== null){ $params['services'] = $services;}
+		if($friends_only !== null){ $params['friends_only'] = $friends_only;}
 		return VKDoc_ReturnValue::factory('places_checkin',$this->Call('places.checkin',$params));
 
 	}
 	/**
-	 * returns a list of check-ins.
-	 * @param $timestamp mixed specifies that the only check-ins that need to be returned are the ones that were created after the set timestamp.
-	 * @param $friendsonly mixed specifies that only friends' check-ins are to be displayed if the geographical coordinates are set. Ignored if latitude and longitude are not set.
-	 * @param $needplaces mixed specifies whether information about the place where a check-in was made should be returned. Ignored, if place has been set.
-	 * @param $count mixed amount of returning check-ins (max. 50). Ignored if a nonzero timestamp is set.
-	 * @param $offset mixed offset relative to the first check-in for selecting a certain subcollection. Ignored if a nonzero timestamp is set.
-	 * @param $longitude mixed geographical longitude of the initial search point, set in degrees (from -180 to 180).
-	 * @param $place mixed place identifier. Ignored if latitude and longitude are indicated.
-	 * @param $uid mixed user identifier. Ignored if latitude and longitude or place are indicated.
-	 * @param $latitude mixed geographical latitude of the initial search point, set in degrees (from -90 to 90).
+	 * возвращает список отметок.
+	 * @param $latitude mixed географическая широта исходной точки поиска, заданная в градусах (от -90 до 90).
+	 * @param $longitude mixed географическая долгота исходной точки поиска, заданная в градусах (от -180 до 180).
+	 * @param $place mixed идентификатор места. Игнорируется, если указаны latitude и longitude.
+	 * @param $uid mixed идентификатор пользователя. Игнорируется, если указаны latitude и longitude или place.
+	 * @param $offset mixed смещение относительно первой отметки для выборки определенного подмножества. Игнорируется, если установлен ненулевой timestamp.
+	 * @param $count mixed количество возвращаемых отметок (максимум 50). Игнорируется, если установлен ненулевой timestamp.
+	 * @param $timestamp mixed указывает, что нужно вернуть только те отметки, которые были созданы после заданного timestamp.
+	 * @param $friends_only mixed указывает, что следует выводить только отметки друзей, если заданы географические координаты. Игнорируется, если не заданы параметры latitude и longitude.
+	 * @param $need_places mixed указывает, следует ли возвращать информацию о месте в котором была сделана отметка. Игнорируется, если указан параметр place.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_places_getCheckins
+	 * @link http://vk.com/developers.php?oid=-1&p=places.getCheckins
 	 */
-	public function places_getCheckins($timestamp = null, $friendsonly = null, $needplaces = null, $count = null, $offset = null, $longitude = null, $place = null, $uid = null, $latitude = null){
+	public function places_getCheckins($latitude = null, $longitude = null, $place = null, $uid = null, $offset = null, $count = null, $timestamp = null, $friends_only = null, $need_places = null){
 		$params = array();
-		if($timestamp !== null){ $params['timestamp'] = $timestamp;}
-		if($friendsonly !== null){ $params['friendsonly'] = $friendsonly;}
-		if($needplaces !== null){ $params['needplaces'] = $needplaces;}
-		if($count !== null){ $params['count'] = $count;}
-		if($offset !== null){ $params['offset'] = $offset;}
+		if($latitude !== null){ $params['latitude'] = $latitude;}
 		if($longitude !== null){ $params['longitude'] = $longitude;}
 		if($place !== null){ $params['place'] = $place;}
 		if($uid !== null){ $params['uid'] = $uid;}
-		if($latitude !== null){ $params['latitude'] = $latitude;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		if($timestamp !== null){ $params['timestamp'] = $timestamp;}
+		if($friends_only !== null){ $params['friends_only'] = $friends_only;}
+		if($need_places !== null){ $params['need_places'] = $need_places;}
 		return VKDoc_ReturnValue::factory('places_getCheckins',$this->Call('places.getCheckins',$params));
 
 	}
 	/**
-	 * returns a list of place types.
+	 * возвращает список типов мест.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_places_getTypes
+	 * @link http://vk.com/developers.php?oid=-1&p=places.getTypes
 	 */
 	public function places_getTypes(){
 		$params = array();
@@ -1092,23 +1489,25 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns a list of countries.
-	 * @param $code mixed two-letter country codes in the [[ISO 3166-1 alpha-2]] standard separated by a comma for which information is needed.code value example:RU,UA,BY
-	 * @param $needfull mixed determines if the full list of countries is required to be returned in the response.
+	 * возвращает список стран.
+	 * @param $need_full mixed определяет, требуется ли в ответе выдавать полный список стран.
+	 * @param $code mixed перечисленные через запятую двухбуквенные коды стран в стандарте [[ISO 3166-1 alpha-2]], для которых необходимо выдать информацию.Пример значения code:RU,UA,BY
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_places_getCountries
+	 * @link http://vk.com/developers.php?oid=-1&p=places.getCountries
 	 */
-	public function places_getCountries($code = null, $needfull = null){
+	public function places_getCountries($need_full = null, $code = null){
 		$params = array();
+		if($need_full !== null){ $params['need_full'] = $need_full;}
 		if($code !== null){ $params['code'] = $code;}
-		if($needfull !== null){ $params['needfull'] = $needfull;}
 		return VKDoc_ReturnValue::factory('places_getCountries',$this->Call('places.getCountries',$params));
 
 	}
 	/**
-	 * returns a list of cities.
-	 * @param $country mixed country identifier obtained by the [[places.getCountries]] method.
-	 * @param $q mixed search query string. For example, 'Saint'.
+	 * возвращает список городов.
+	 * @param $country mixed идентификатор страны, полученый в методе [[places.getCountries]].
+	 * @param $q mixed строка поискового запроса. Например, 'Санкт'.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_places_getCities
+	 * @link http://vk.com/developers.php?oid=-1&p=places.getCities
 	 */
 	public function places_getCities($country, $q = null){
 		$params = array();
@@ -1118,9 +1517,24 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns information about countries by their id.
-	 * @param $cids mixed country IDs, separated by a comma.
+	 * возвращает список регионов.
+	 * @param $country mixed идентификатор страны, полученный в методе [[places.getCountries]].
+	 * @param $q mixed строка поискового запроса. Например, 'Лен'.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_places_getRegions
+	 * @link http://vk.com/developers.php?oid=-1&p=places.getRegions
+	 */
+	public function places_getRegions($country, $q = null){
+		$params = array();
+		$params['country'] = $country;
+		if($q !== null){ $params['q'] = $q;}
+		return VKDoc_ReturnValue::factory('places_getRegions',$this->Call('places.getRegions',$params));
+
+	}
+	/**
+	 * возвращает информацию о странах по их id.
+	 * @param $cids mixed перечисленные через запятую ID стран.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_places_getCountryById
+	 * @link http://vk.com/developers.php?oid=-1&p=places.getCountryById
 	 */
 	public function places_getCountryById($cids){
 		$params = array();
@@ -1129,9 +1543,10 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns information about cities by their id.
-	 * @param $cids mixed city IDs, separated by a comma.
+	 * возвращает информацию о городах по их id.
+	 * @param $cids mixed перечисленные через запятую ID городов.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_places_getCityById
+	 * @link http://vk.com/developers.php?oid=-1&p=places.getCityById
 	 */
 	public function places_getCityById($cids){
 		$params = array();
@@ -1140,221 +1555,242 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * sends a notification to a user.
-	 * @param $message mixed notification text that needs to be in 'UTF-8' character encoding (max. 1024 characters).
-	 * @param $uids mixed list of user IDs, separated by a comma, to whom notifications need to be sent (max. 100).
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $timestamp mixed UNIX-time of the server.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_sendNotification
+	 * возвращает информацию об улицах по их id.
+	 * @param $sids mixed перечисленные через запятую ID улиц.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_places_getStreetById
+	 * @link http://vk.com/developers.php?oid=-1&p=places.getStreetById
 	 */
-	public function secure_sendNotification($message, $uids, $random, $timestamp){
+	public function places_getStreetById($sids){
 		$params = array();
-		$params['message'] = $message;
-		$params['uids'] = $uids;
-		$params['random'] = $random;
+		$params['sids'] = $sids;
+		return VKDoc_ReturnValue::factory('places_getStreetById',$this->Call('places.getStreetById',$params));
+
+	}
+	/**
+	 * отправляет уведомление пользователю.
+	 * @param $timestamp mixed UNIX-time сервера.
+	 * @param $random mixed любое случайное число для обеспечения уникальности запроса
+	 * @param $uids mixed перечисленные через запятую ID пользователей, которым отправляется уведомление (максимум 100 штук).
+	 * @param $message mixed текст уведомления, который следует передавать в кодировке 'UTF-8' (максимум 254 символа).
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_sendNotification
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.sendNotification
+	 */
+	public function secure_sendNotification($timestamp, $random, $uids, $message){
+		$params = array();
 		$params['timestamp'] = $timestamp;
+		$params['random'] = $random;
+		$params['uids'] = $uids;
+		$params['message'] = $message;
 		return VKDoc_ReturnValue::factory('secure_sendNotification',$this->Call('secure.sendNotification',$params));
 
 	}
 	/**
-	 * saves the status bar of an application for subsequent output in an overall list of applications on a user's page.
-	 * @param $status mixed status text limited to '32' characters.
-	 * @param $uid mixed ID of the user whose status is being recorded.
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $timestamp mixed UNIX-time of the server.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_saveAppStatus
-	 */
-	public function secure_saveAppStatus($status, $uid, $random, $timestamp){
-		$params = array();
-		$params['status'] = $status;
-		$params['uid'] = $uid;
-		$params['random'] = $random;
-		$params['timestamp'] = $timestamp;
-		return VKDoc_ReturnValue::factory('secure_saveAppStatus',$this->Call('secure.saveAppStatus',$params));
-
-	}
-	/**
-	 * returns the status bar of an application that was saved using [[secure.saveAppStatus]].
-	 * @param $uid mixed ID of the user whose status is being recorded.
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $timestamp mixed UNIX-time of the server.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_getAppStatus
-	 */
-	public function secure_getAppStatus($uid, $random, $timestamp){
-		$params = array();
-		$params['uid'] = $uid;
-		$params['random'] = $random;
-		$params['timestamp'] = $timestamp;
-		return VKDoc_ReturnValue::factory('secure_getAppStatus',$this->Call('secure.getAppStatus',$params));
-
-	}
-	/**
-	 * returns the balance of payments of an application.
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $timestamp mixed UNIX-time of the server.
+	 * возвращает платежный баланс приложения.
+	 * @param $timestamp mixed UNIX-time сервера.
+	 * @param $random mixed любое случайное число для обеспечения уникальности запроса
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_getAppBalance
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.getAppBalance
 	 */
-	public function secure_getAppBalance($random, $timestamp){
+	public function secure_getAppBalance($timestamp, $random){
 		$params = array();
-		$params['random'] = $random;
 		$params['timestamp'] = $timestamp;
+		$params['random'] = $random;
 		return VKDoc_ReturnValue::factory('secure_getAppBalance',$this->Call('secure.getAppBalance',$params));
 
 	}
 	/**
-	 * returns the balance of a user on the account of the application.
-	 * @param $uid mixed user ID.
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $timestamp mixed UNIX-time of the server.
+	 * возвращает баланс пользователя на счету приложения.
+	 * @param $timestamp mixed UNIX-time сервера.
+	 * @param $random mixed любое случайное число для обеспечения уникальности запроса
+	 * @param $uid mixed ID пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_getBalance
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.getBalance
 	 */
-	public function secure_getBalance($uid, $random, $timestamp){
+	public function secure_getBalance($timestamp, $random, $uid){
 		$params = array();
-		$params['uid'] = $uid;
-		$params['random'] = $random;
 		$params['timestamp'] = $timestamp;
+		$params['random'] = $random;
+		$params['uid'] = $uid;
 		return VKDoc_ReturnValue::factory('secure_getBalance',$this->Call('secure.getBalance',$params));
 
 	}
 	/**
-	 * charges votes off a user's account to the application account.
-	 * @param $votes mixed the amount of votes to be charged off a user's account (in one hundredths).
-	 * @param $uid mixed user ID.
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $timestamp mixed UNIX-time of the server.
+	 * списывает голоса со счета пользователя на счет приложения.
+	 * @param $timestamp mixed UNIX-time сервера.
+	 * @param $random mixed любое случайное число для обеспечения уникальности запроса
+	 * @param $uid mixed ID пользователя.
+	 * @param $votes mixed количество списываемых с пользователя голосов (в сотых долях).
+	 * @param $test_mode mixed включает тестовый режим при котором голоса не снимаются.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_withdrawVotes
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.withdrawVotes
 	 */
-	public function secure_withdrawVotes($votes, $uid, $random, $timestamp){
+	public function secure_withdrawVotes($timestamp, $random, $uid, $votes, $test_mode = null){
 		$params = array();
-		$params['votes'] = $votes;
-		$params['uid'] = $uid;
-		$params['random'] = $random;
 		$params['timestamp'] = $timestamp;
+		$params['random'] = $random;
+		$params['uid'] = $uid;
+		$params['votes'] = $votes;
+		if($test_mode !== null){ $params['test_mode'] = $test_mode;}
 		return VKDoc_ReturnValue::factory('secure_withdrawVotes',$this->Call('secure.withdrawVotes',$params));
 
 	}
 	/**
-	 * returns an application's transaction history.
-	 * @param $timestamp mixed UNIX-time of the server.
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $dateto mixed end date filter. Set in UNIX-time.
-	 * @param $limit mixed amount of returning records. '1000' by default.
-	 * @param $datefrom mixed start date filter. Set in UNIX-time.
-	 * @param $uidfrom mixed filter by user ID, off whose balance votes were charged.
-	 * @param $type mixed Type of returning transactions.
-	 * @param $uidto mixed filter by user ID, to whose balance votes were added.
+	 * возвращает историю транзакций внутри приложения.
+	 * @param $timestamp mixed UNIX-time сервера.
+	 * @param $random mixed любое случайное число для обеспечения уникальности запроса
+	 * @param $type mixed Тип возвращаемых транзакций.
+	 * @param $uid_from mixed фильтр по ID пользователя, с баланса которого снимались голоса.
+	 * @param $uid_to mixed фильтр по ID пользователя, на баланс которого начислялись голоса.
+	 * @param $date_from mixed фильтр по дате начала. Задается в виде UNIX-time.
+	 * @param $date_to mixed фильтр по дате окончания. Задается в виде UNIX-time.
+	 * @param $limit mixed количество возвращаемых записей. По умолчанию '1000'.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_getTransactionsHistory
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.getTransactionsHistory
 	 */
-	public function secure_getTransactionsHistory($timestamp, $random, $dateto = null, $limit = null, $datefrom = null, $uidfrom = null, $type = null, $uidto = null){
+	public function secure_getTransactionsHistory($timestamp, $random, $type = null, $uid_from = null, $uid_to = null, $date_from = null, $date_to = null, $limit = null){
 		$params = array();
 		$params['timestamp'] = $timestamp;
 		$params['random'] = $random;
-		if($dateto !== null){ $params['dateto'] = $dateto;}
-		if($limit !== null){ $params['limit'] = $limit;}
-		if($datefrom !== null){ $params['datefrom'] = $datefrom;}
-		if($uidfrom !== null){ $params['uidfrom'] = $uidfrom;}
 		if($type !== null){ $params['type'] = $type;}
-		if($uidto !== null){ $params['uidto'] = $uidto;}
+		if($uid_from !== null){ $params['uid_from'] = $uid_from;}
+		if($uid_to !== null){ $params['uid_to'] = $uid_to;}
+		if($date_from !== null){ $params['date_from'] = $date_from;}
+		if($date_to !== null){ $params['date_to'] = $date_to;}
+		if($limit !== null){ $params['limit'] = $limit;}
 		return VKDoc_ReturnValue::factory('secure_getTransactionsHistory',$this->Call('secure.getTransactionsHistory',$params));
 
 	}
 	/**
-	 * increases a user's rating on behalf of the application.
-	 * @param $rate mixed amount of rating points required to add.
-	 * @param $timestamp mixed UNIX-time of the server.
-	 * @param $uid mixed 'ID' of the user whose rating is being increased.
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $message mixed text attached to the increased rating. Max. size - '512' characters. Encoding - 'UTF-8'. Supports [[VK Wiki Markup Description
+	 * поднимает пользователю рейтинг от имени приложения.
+	 * @param $timestamp mixed UNIX-time сервера.
+	 * @param $random mixed любое случайное число для обеспечения уникальности запроса
+	 * @param $uid mixed 'id' пользователя, которому повышается рейтинг.
+	 * @param $rate mixed количество баллов рейтинга, которое следует добавить.
+	 * @param $message mixed текст, прикрепляемый при повышению рейтинга. Максимальный размер - '512' символов. Кодировка - 'UTF-8'. Поддерживается [http://vkontakte.ru/pages.php?o=-55&p=%CE%EF%E8%F1%E0%ED%E8%E5%20%E2%E8%EA%E8-%F0%E0%E7%EC%E5%F2%EA%E8%20%C2%CA%EE%ED%F2%E0%EA%F2%E5
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_addRating
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.addRating
 	 */
-	public function secure_addRating($rate, $timestamp, $uid, $random, $message = null){
+	public function secure_addRating($timestamp, $random, $uid, $rate, $message = null){
 		$params = array();
-		$params['rate'] = $rate;
 		$params['timestamp'] = $timestamp;
-		$params['uid'] = $uid;
 		$params['random'] = $random;
+		$params['uid'] = $uid;
+		$params['rate'] = $rate;
 		if($message !== null){ $params['message'] = $message;}
 		return VKDoc_ReturnValue::factory('secure_addRating',$this->Call('secure.addRating',$params));
 
 	}
 	/**
-	 * sets a counter that is shown to the user in bold on the left menu, provided that the user has added the application to the left menu.
-	 * @param $counter mixed counter value.
-	 * @param $uid mixed 'ID' of the user to whom the counter will be installed.
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $timestamp mixed UNIX-time of the server.
+	 * устанавливает счетчик, который выводится пользователю жирным шрифтом в левом меню, если он добавил приложение в левое меню.
+	 * @param $timestamp mixed UNIX-time сервера.
+	 * @param $random mixed любое случайное число для обеспечения уникальности запроса
+	 * @param $uid mixed 'id' пользователя, которому устанавливается счетчик.
+	 * @param $counter mixed значение счетчика.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_setCounter
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.setCounter
 	 */
-	public function secure_setCounter($counter, $uid, $random, $timestamp){
+	public function secure_setCounter($timestamp, $random, $uid, $counter){
 		$params = array();
-		$params['counter'] = $counter;
-		$params['uid'] = $uid;
-		$params['random'] = $random;
 		$params['timestamp'] = $timestamp;
+		$params['random'] = $random;
+		$params['uid'] = $uid;
+		$params['counter'] = $counter;
 		return VKDoc_ReturnValue::factory('secure_setCounter',$this->Call('secure.setCounter',$params));
 
 	}
 	/**
-	 * returns the list of SMS notifications sent by an application.
-	 * @param $timestamp mixed UNIX-time of the server.
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $limit mixed the number of returning records. By default - '1000'.
-	 * @param $dateto mixed end date filter. Set in UNIX-time.
-	 * @param $uid mixed filter by ID of the user to whom the notification has been sent.
-	 * @param $datefrom mixed start date filter. Set in Unix-time.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_getSMSHistory
+	 * устанавливает уровень пользователя в приложении.
+	 * @param $uid mixed 'id' пользователя, которому устанавливается уровень.
+	 * @param $level mixed числовое значение текущего уровня пользователя.
+	 * @param $levels mixed позволяет указывать уровни нескольким пользователям за один запрос. Значение следует указывать в следующем формате: 'uid1:level1,uid2:level2', пример: '66748:6,6492:2'. В случае, если указан этот параметр, параметры 'level' и 'uid' не учитываются. Метод принимает не более '200' значений за один запрос.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_setUserLevel
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.setUserLevel
 	 */
-	public function secure_getSMSHistory($timestamp, $random, $limit = null, $dateto = null, $uid = null, $datefrom = null){
+	public function secure_setUserLevel($uid, $level, $levels = null){
+		$params = array();
+		$params['uid'] = $uid;
+		$params['level'] = $level;
+		if($levels !== null){ $params['levels'] = $levels;}
+		return VKDoc_ReturnValue::factory('secure_setUserLevel',$this->Call('secure.setUserLevel',$params));
+
+	}
+	/**
+	 * получает уровень пользователя в приложении.
+	 * @param $uids mixed идентификаторы пользователей, разделённые через запятую, игровые уровни которых необходимо получить.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_getUserLevel
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.getUserLevel
+	 */
+	public function secure_getUserLevel($uids){
+		$params = array();
+		$params['uids'] = $uids;
+		return VKDoc_ReturnValue::factory('secure_getUserLevel',$this->Call('secure.getUserLevel',$params));
+
+	}
+	/**
+	 * возвращает список SMS-уведомлений, отосланных приложением.
+	 * @param $timestamp mixed UNIX-time сервера.
+	 * @param $random mixed любое случайное число для обеспечения уникальности запроса
+	 * @param $uid mixed фильтр по id пользователя, которому высылалось уведомление.
+	 * @param $date_from mixed фильтр по дате начала. Задается в виде UNIX-time.
+	 * @param $date_to mixed фильтр по дате окончания. Задается в виде UNIX-time.
+	 * @param $limit mixed количество возвращаемых записей. По умолчанию 1000.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_getSMSHistory
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.getSMSHistory
+	 */
+	public function secure_getSMSHistory($timestamp, $random, $uid = null, $date_from = null, $date_to = null, $limit = null){
 		$params = array();
 		$params['timestamp'] = $timestamp;
 		$params['random'] = $random;
-		if($limit !== null){ $params['limit'] = $limit;}
-		if($dateto !== null){ $params['dateto'] = $dateto;}
 		if($uid !== null){ $params['uid'] = $uid;}
-		if($datefrom !== null){ $params['datefrom'] = $datefrom;}
+		if($date_from !== null){ $params['date_from'] = $date_from;}
+		if($date_to !== null){ $params['date_to'] = $date_to;}
+		if($limit !== null){ $params['limit'] = $limit;}
 		return VKDoc_ReturnValue::factory('secure_getSMSHistory',$this->Call('secure.getSMSHistory',$params));
 
 	}
 	/**
-	 * sends an SMS notification to the mobile phone of a user.
-	 * @param $message mixed the 'SMS' text that should be transferred in 'UTF-8' encoding. Only numbers and Latin letters are allowed. Maximum size - '160' characters.
-	 * @param $uid mixed the 'ID' of the user to whom the 'SMS' notification will be sent. The user must allow application notifications ([[getUserSettings]], +1).
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $timestamp mixed UNIX-time of the server.
+	 * отправляет SMS-уведомление на телефон пользователя.
+	 * @param $timestamp mixed UNIX-time сервера.
+	 * @param $random mixed любое случайное число для обеспечения уникальности запроса
+	 * @param $uid mixed 'id' пользователя, которому отправляется 'SMS'-уведомление. Пользователь должен разрешить приложению отсылать ему уведомления ([[getUserSettings]], +1).
+	 * @param $message mixed текст 'SMS', который следует передавать в кодировке 'UTF-8'. Допускаются только латинские буквы и цифры. Максимальный размер - '160' символов.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_sendSMSNotification
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.sendSMSNotification
 	 */
-	public function secure_sendSMSNotification($message, $uid, $random, $timestamp){
+	public function secure_sendSMSNotification($timestamp, $random, $uid, $message){
 		$params = array();
-		$params['message'] = $message;
-		$params['uid'] = $uid;
-		$params['random'] = $random;
 		$params['timestamp'] = $timestamp;
+		$params['random'] = $random;
+		$params['uid'] = $uid;
+		$params['message'] = $message;
 		return VKDoc_ReturnValue::factory('secure_sendSMSNotification',$this->Call('secure.sendSMSNotification',$params));
 
 	}
 	/**
-	 * returns SMS texts received from users of an application.
-	 * @param $timestamp mixed UNIX-time of the server.
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $dateto mixed end date filter. Set in UNIX-time.
-	 * @param $uid mixed filter by 'ID' of the user: if this parameter is indicated, then only 'SMSes'  that were sent by the given user will be returned.
-	 * @param $datefrom mixed start date filter. Set in UNIX-time.
+	 * возвращает тексты SMS, полученные от пользователей приложения.
+	 * @param $timestamp mixed UNIX-time сервера.
+	 * @param $random mixed любое случайное число для обеспечения уникальности запроса
+	 * @param $uid mixed фильтр id пользователя: если этот параметр указан, то будут возвращаться только те SMS, которые отправил данный пользователь.
+	 * @param $date_from mixed фильтр по дате начала. Задается в виде UNIX-time.
+	 * @param $date_to mixed фильтр по дате окончания. Задается в виде UNIX-time.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_getSMS
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.getSMS
 	 */
-	public function secure_getSMS($timestamp, $random, $dateto = null, $uid = null, $datefrom = null){
+	public function secure_getSMS($timestamp, $random, $uid = null, $date_from = null, $date_to = null){
 		$params = array();
 		$params['timestamp'] = $timestamp;
 		$params['random'] = $random;
-		if($dateto !== null){ $params['dateto'] = $dateto;}
 		if($uid !== null){ $params['uid'] = $uid;}
-		if($datefrom !== null){ $params['datefrom'] = $datefrom;}
+		if($date_from !== null){ $params['date_from'] = $date_from;}
+		if($date_to !== null){ $params['date_to'] = $date_to;}
 		return VKDoc_ReturnValue::factory('secure_getSMS',$this->Call('secure.getSMS',$params));
 
 	}
 	/**
-	 * sets a prefix for receiving SMS
-	 * @param $prefix mixed 3-16 characters of the Latin alphabet in UTF-8 format.
+	 * устанавливает префикс для приема SMS.
+	 * @param $prefix mixed 3-16 символов латинского алфавита в формате UTF-8.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_setSMSPrefix
+	 * @link http://vk.com/developers.php?oid=-1&p=setSMSPrefix
 	 */
 	public function setSMSPrefix($prefix){
 		$params = array();
@@ -1363,8 +1799,9 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns a prefix for receiving SMS.
+	 * возвращает префикс для приема SMS.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getSMSPrefix
+	 * @link http://vk.com/developers.php?oid=-1&p=getSMSPrefix
 	 */
 	public function getSMSPrefix(){
 		$params = array();
@@ -1372,138 +1809,492 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns a list of translated phrases into the specified language.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @param $language mixed ID of the language in which it is needed to obtain translated phrases. The current application user's language is chosen by default.
-	 * @param $keys mixed a list of keys of language phrases, separated by a comma, the translation of which is needed to obtain.
-	 * @param $all mixed if this parameter equals '1' then the list of all created phrases is returned.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_language_getValues
+	 * возвращает значение хранимой переменной.
+	 * @param $key mixed Строковое название переменной длиной не более '100' символов.
+	 * @param $keys mixed Список ключей, разделённых запятыми. Если указан этот параметр, то параметр 'key' не учитывается. Максимальное количество ключей не должно превышать '1000' штук.
+	 * @param $global mixed Указывается '1', если необходимо получить глобальную переменную, а не переменную пользователя. По умолчанию '0'.
+	 * @param $uid mixed id пользователя, переменная которого считывается, в случае если данные запрашиваются [[Авторизация сервера приложения
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_storage_get
+	 * @link http://vk.com/developers.php?oid=-1&p=storage.get
 	 */
-	public function language_getValues($apiid, $v, $sig, $testmode = null, $format = null, $language = null, $keys = null, $all = null){
+	public function storage_get($key, $keys = null, $global = null, $uid = null){
 		$params = array();
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
-		if($language !== null){ $params['language'] = $language;}
+		$params['key'] = $key;
 		if($keys !== null){ $params['keys'] = $keys;}
-		if($all !== null){ $params['all'] = $all;}
-		return VKDoc_ReturnValue::factory('language_getValues',$this->Call('language.getValues',$params));
+		if($global !== null){ $params['global'] = $global;}
+		if($uid !== null){ $params['uid'] = $uid;}
+		return VKDoc_ReturnValue::factory('storage_get',$this->Call('storage.get',$params));
 
 	}
 	/**
-	 * creates a language phrase for translation into other languages.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $value mixed the main translation of the phrase into the chosen language.
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $key mixed a unique phrase key for the given application. It can consist of Latin letters, numbers and an underscore.
-	 * @param $timestamp mixed UNIX-time of the server.
-	 * @param $sig mixed request signature [[Secure Application Interaction with API
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @param $locale mixed the language of the transmittable phrase. It can take on the values 'en' for English and 'ru' for Russian. 'ru' by default.
-	 * @param $description mixed a description of the phrase to be translated that will be seen by translators. To receive a better quality translation, it is recommended to fill out this field in English.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_setLanguageValue
+	 * сохраняет значение хранимой переменной.
+	 * @param $key mixed Строковое название переменной длиной не более '100' символов. Может содержать символы латинского алфавита, цифры, знак тире, нижнее подчёркивание '[a-zA-Z_\-0-9]'.
+	 * @param $value mixed Строковое значение переменной, ограниченное '4096' байтами.
+	 * @param $global mixed Указывается '1', если необходимо работать с глобальными переменными, а не с переменными пользователя. По умолчанию '0'.
+	 * @param $uid mixed id пользователя, переменная которого устанавливается, в случае если данные запрашиваются [[Авторизация сервера приложения
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_storage_set
+	 * @link http://vk.com/developers.php?oid=-1&p=storage.set
 	 */
-	public function secure_setLanguageValue($apiid, $value, $random, $key, $timestamp, $sig, $v, $testmode = null, $format = null, $locale = null, $description = null){
+	public function storage_set($key, $value = null, $global = null, $uid = null){
 		$params = array();
-		$params['apiid'] = $apiid;
-		$params['value'] = $value;
-		$params['random'] = $random;
 		$params['key'] = $key;
-		$params['timestamp'] = $timestamp;
+		if($value !== null){ $params['value'] = $value;}
+		if($global !== null){ $params['global'] = $global;}
+		if($uid !== null){ $params['uid'] = $uid;}
+		return VKDoc_ReturnValue::factory('storage_set',$this->Call('storage.set',$params));
+
+	}
+	/**
+	 * возвращает текущее время.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getServerTime
+	 * @link http://vk.com/developers.php?oid=-1&p=getServerTime
+	 */
+	public function getServerTime(){
+		$params = array();
+		return VKDoc_ReturnValue::factory('getServerTime',$this->Call('getServerTime',$params));
+
+	}
+	/**
+	 * устанавливает короткое название приложения в левом меню, если пользователь добавил туда приложение.
+	 * @param $name mixed короткое название приложения для левого меню, до 17 символов в формате 'UTF'.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_setNameInMenu
+	 * @link http://vk.com/developers.php?oid=-1&p=setNameInMenu
+	 */
+	public function setNameInMenu($name){
+		$params = array();
+		$params['name'] = $name;
+		return VKDoc_ReturnValue::factory('setNameInMenu',$this->Call('setNameInMenu',$params));
+
+	}
+	/**
+	 * возвращает список заметок пользователя.
+	 * @param $uid mixed id пользователя, заметки которого нужно вернуть. По умолчанию – id текущего пользователя.
+	 * @param $nids mixed перечисленные через запятую id заметок, входящие в выборку по uid.
+	 * @param $sort mixed сортировка результатов (0 - по дате создания в порядке убывания, 1 - по дате создания в порядке возрастания).
+	 * @param $count mixed количество сообщений, которое необходимо получить (но не более 100). По умолчанию выставляется 20.
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества заметок.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_get
+	 * @link http://vk.com/developers.php?oid=-1&p=notes.get
+	 */
+	public function notes_get($uid = null, $nids = null, $sort = null, $count = null, $offset = null){
+		$params = array();
+		if($uid !== null){ $params['uid'] = $uid;}
+		if($nids !== null){ $params['nids'] = $nids;}
+		if($sort !== null){ $params['sort'] = $sort;}
+		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		return VKDoc_ReturnValue::factory('notes_get',$this->Call('notes.get',$params));
+
+	}
+	/**
+	 * возвращает текущую заметку пользователя.
+	 * @param $nid mixed id запрашиваемой заметки.
+	 * @param $owner_id mixed id владельца заметки (по умолчанию используется id текущего пользователя)
+	 * @param $need_wiki mixed определяет, требуется ли в ответе wiki-представление заметки (работает, только если запрашиваются заметки текущего пользователя)
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_getById
+	 * @link http://vk.com/developers.php?oid=-1&p=notes.getById
+	 */
+	public function notes_getById($nid, $owner_id = null, $need_wiki = null){
+		$params = array();
+		$params['nid'] = $nid;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($need_wiki !== null){ $params['need_wiki'] = $need_wiki;}
+		return VKDoc_ReturnValue::factory('notes_getById',$this->Call('notes.getById',$params));
+
+	}
+	/**
+	 * возвращает список заметок друзей пользователя.
+	 * @param $count mixed количество сообщений, которое необходимо получить (но не более 100). По умолчанию выставляется 20.
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества заметок.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_getFriendsNotes
+	 * @link http://vk.com/developers.php?oid=-1&p=notes.getFriendsNotes
+	 */
+	public function notes_getFriendsNotes($count = null, $offset = null){
+		$params = array();
+		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		return VKDoc_ReturnValue::factory('notes_getFriendsNotes',$this->Call('notes.getFriendsNotes',$params));
+
+	}
+	/**
+	 * создаёт новую заметку
+	 * @param $title mixed заголовок заметки.
+	 * @param $text mixed текст заметки.
+	 * @param $privacy mixed уровень доступа к заметке. Значения: 0 – все пользователи, 1 – только друзья, 2 – друзья и друзья друзей, 3 - только пользователь.
+	 * @param $comment_privacy mixed уровень доступа к комментированию заметки. Значения: 0 – все пользователи, 1 – только друзья, 2 – друзья и друзья друзей, 3 - только пользователь.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_add
+	 * @link http://vk.com/developers.php?oid=-1&p=notes.add
+	 */
+	public function notes_add($title, $text, $privacy = null, $comment_privacy = null){
+		$params = array();
+		$params['title'] = $title;
+		$params['text'] = $text;
+		if($privacy !== null){ $params['privacy'] = $privacy;}
+		if($comment_privacy !== null){ $params['comment_privacy'] = $comment_privacy;}
+		return VKDoc_ReturnValue::factory('notes_add',$this->Call('notes.add',$params));
+
+	}
+	/**
+	 * редактирует заметку пользователя
+	 * @param $nid mixed id редактируемой заметки.
+	 * @param $title mixed заголовок заметки.
+	 * @param $text mixed текст заметки.
+	 * @param $privacy mixed уровень доступа к заметке. Значения: 0 – все пользователи, 1 – только друзья, 2 – друзья и друзья друзей, 3 - только пользователь.
+	 * @param $comment_privacy mixed уровень доступа к комментированию заметки. Значения: 0 – все пользователи, 1 – только друзья, 2 – друзья и друзья друзей, 3 - только пользователь.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_edit
+	 * @link http://vk.com/developers.php?oid=-1&p=notes.edit
+	 */
+	public function notes_edit($nid, $title, $text, $privacy = null, $comment_privacy = null){
+		$params = array();
+		$params['nid'] = $nid;
+		$params['title'] = $title;
+		$params['text'] = $text;
+		if($privacy !== null){ $params['privacy'] = $privacy;}
+		if($comment_privacy !== null){ $params['comment_privacy'] = $comment_privacy;}
+		return VKDoc_ReturnValue::factory('notes_edit',$this->Call('notes.edit',$params));
+
+	}
+	/**
+	 * удаляет заметку пользователя
+	 * @param $nid mixed id удаляемой заметки.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_delete
+	 * @link http://vk.com/developers.php?oid=-1&p=notes.delete
+	 */
+	public function notes_delete($nid){
+		$params = array();
+		$params['nid'] = $nid;
+		return VKDoc_ReturnValue::factory('notes_delete',$this->Call('notes.delete',$params));
+
+	}
+	/**
+	 * возвращает список комментариев к заметке.
+	 * @param $nid mixed id заметки, комментарии которой нужно вернуть
+	 * @param $owner_id mixed идентификатор пользователя (по умолчанию - текущий пользователь).
+	 * @param $sort mixed сортировка результатов (0 - по дате добавления в порядке возрастания, 1 - по дате добавления в порядке убывания).
+	 * @param $count mixed количество комментариев, которое необходимо получить (не более 100). По умолчанию выставляется 20.
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества комментариев.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_getComments
+	 * @link http://vk.com/developers.php?oid=-1&p=notes.getComments
+	 */
+	public function notes_getComments($nid, $owner_id = null, $sort = null, $count = null, $offset = null){
+		$params = array();
+		$params['nid'] = $nid;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($sort !== null){ $params['sort'] = $sort;}
+		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		return VKDoc_ReturnValue::factory('notes_getComments',$this->Call('notes.getComments',$params));
+
+	}
+	/**
+	 * добавляет новый комментарий к заметке.
+	 * @param $nid mixed id заметки, в которой нужно создать комментарий
+	 * @param $message mixed текст комментария (минимальная длина - 2 символа).
+	 * @param $owner_id mixed идентификатор пользователя, владельца заметки (по умолчанию - текущий пользователь).
+	 * @param $reply_to mixed id пользователя, ответом на комментарий которого является добавляемый комментарий (не передаётся если комментарий не является ответом).
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_createComment
+	 * @link http://vk.com/developers.php?oid=-1&p=notes.createComment
+	 */
+	public function notes_createComment($nid, $message, $owner_id = null, $reply_to = null){
+		$params = array();
+		$params['nid'] = $nid;
+		$params['message'] = $message;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($reply_to !== null){ $params['reply_to'] = $reply_to;}
+		return VKDoc_ReturnValue::factory('notes_createComment',$this->Call('notes.createComment',$params));
+
+	}
+	/**
+	 * изменяет текст комментария к заметке.
+	 * @param $cid mixed id комментария, котороый нужно отредактировать
+	 * @param $message mixed новый текст комментария (минимальная длина - 2 символа).
+	 * @param $owner_id mixed идентификатор пользователя, владельца заметки (по умолчанию - текущий пользователь).
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_editComment
+	 * @link http://vk.com/developers.php?oid=-1&p=notes.editComment
+	 */
+	public function notes_editComment($cid, $message, $owner_id = null){
+		$params = array();
+		$params['cid'] = $cid;
+		$params['message'] = $message;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		return VKDoc_ReturnValue::factory('notes_editComment',$this->Call('notes.editComment',$params));
+
+	}
+	/**
+	 * удаляет комментарий у заметки.
+	 * @param $cid mixed id комментария, котороый нужно удалить
+	 * @param $owner_id mixed идентификатор пользователя, владельца заметки (по-умолчанию - текущий пользователь).
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_deleteComment
+	 * @link http://vk.com/developers.php?oid=-1&p=notes.deleteComment
+	 */
+	public function notes_deleteComment($cid, $owner_id = null){
+		$params = array();
+		$params['cid'] = $cid;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		return VKDoc_ReturnValue::factory('notes_deleteComment',$this->Call('notes.deleteComment',$params));
+
+	}
+	/**
+	 * восстанавливает комментарий у заметки.
+	 * @param $cid mixed id комментария, который нужно восстановить
+	 * @param $owner_id mixed идентификатор пользователя, владельца заметки (по умолчанию - текущий пользователь).
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_restoreComment
+	 * @link http://vk.com/developers.php?oid=-1&p=notes.restoreComment
+	 */
+	public function notes_restoreComment($cid, $owner_id = null){
+		$params = array();
+		$params['cid'] = $cid;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		return VKDoc_ReturnValue::factory('notes_restoreComment',$this->Call('notes.restoreComment',$params));
+
+	}
+	/**
+	 * возвращает вики-страницу.
+	 * @param $pid mixed id вики-страницы. Вместо 'pid' может быть передан параметр 'title' - название вики-страницы.
+	 * @param $title mixed название вики-страницы.
+	 * @param $gid mixed id группы, где создана страница.
+	 * @param $mid mixed id создателя вики-страницы, в случае если необходимо обратиться к одной из личных вики страниц пользователя.
+	 * @param $global mixed '1' - требуется получить глобальную вики-страницу. В данном случае, при указании параметра 'title', параметры 'gid' и 'mid' игнорируются. По умолчанию '0'.
+	 * @param $need_html mixed определяет, требуется ли в ответе html-представление вики-страницы.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_pages_get
+	 * @link http://vk.com/developers.php?oid=-1&p=pages.get
+	 */
+	public function pages_get($pid = null, $title = null, $gid = null, $mid = null, $global = null, $need_html = null){
+		$params = array();
+		if($pid !== null){ $params['pid'] = $pid;}
+		if($title !== null){ $params['title'] = $title;}
+		if($gid !== null){ $params['gid'] = $gid;}
+		if($mid !== null){ $params['mid'] = $mid;}
+		if($global !== null){ $params['global'] = $global;}
+		if($need_html !== null){ $params['need_html'] = $need_html;}
+		return VKDoc_ReturnValue::factory('pages_get',$this->Call('pages.get',$params));
+
+	}
+	/**
+	 * сохраняет текст вики-страницы.
+	 * @param $pid mixed id вики-страницы. Вместо 'pid' может быть передан параметр 'title' - название вики-страницы. В этом случае если страницы с таким названием еще нет, она будет создана.
+	 * @param $gid mixed id группы, где создана страница. Вместо 'gid' может быть передан параметр 'mid' - id создателя вики-страницы. В этом случае произойдет обращение не к странице группы, а к одной из личных вики-страниц пользователя.
+	 * @param $Text mixed новый текст страницы в вики-формате.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_pages_save
+	 * @link http://vk.com/developers.php?oid=-1&p=pages.save
+	 */
+	public function pages_save($pid, $gid, $Text){
+		$params = array();
+		$params['pid'] = $pid;
+		$params['gid'] = $gid;
+		$params['Text'] = $Text;
+		return VKDoc_ReturnValue::factory('pages_save',$this->Call('pages.save',$params));
+
+	}
+	/**
+	 * сохраняет настройки доступа вики-страницы.
+	 * @param $pid mixed id вики-страницы.
+	 * @param $gid mixed id группы, где создана страница.
+	 * @param $view mixed значение настройки доступа на чтение; описание значений Вы можете узнать [[pages.get
+	 * @param $edit mixed значение настройки доступа на редактирование; описание значений Вы можете узнать [[pages.get
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_pages_saveAccess
+	 * @link http://vk.com/developers.php?oid=-1&p=pages.saveAccess
+	 */
+	public function pages_saveAccess($pid, $gid, $view, $edit){
+		$params = array();
+		$params['pid'] = $pid;
+		$params['gid'] = $gid;
+		$params['view'] = $view;
+		$params['edit'] = $edit;
+		return VKDoc_ReturnValue::factory('pages_saveAccess',$this->Call('pages.saveAccess',$params));
+
+	}
+	/**
+	 * возвращает старую версию вики-страницы.
+	 * @param $hid mixed id версии вики-страницы.
+	 * @param $gid mixed id группы, где создана страница.
+	 * @param $need_html mixed определяет, требуется ли в ответе html-представление версии вики-страницы.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_pages_getVersion
+	 * @link http://vk.com/developers.php?oid=-1&p=pages.getVersion
+	 */
+	public function pages_getVersion($hid, $gid, $need_html = null){
+		$params = array();
+		$params['hid'] = $hid;
+		$params['gid'] = $gid;
+		if($need_html !== null){ $params['need_html'] = $need_html;}
+		return VKDoc_ReturnValue::factory('pages_getVersion',$this->Call('pages.getVersion',$params));
+
+	}
+	/**
+	 * возвращает список всех старых версий вики-страницы.
+	 * @param $pid mixed id вики-страницы.
+	 * @param $gid mixed id группы, где создана страница.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_pages_getHistory
+	 * @link http://vk.com/developers.php?oid=-1&p=pages.getHistory
+	 */
+	public function pages_getHistory($pid, $gid){
+		$params = array();
+		$params['pid'] = $pid;
+		$params['gid'] = $gid;
+		return VKDoc_ReturnValue::factory('pages_getHistory',$this->Call('pages.getHistory',$params));
+
+	}
+	/**
+	 * возвращает список вики-страниц в группе.
+	 * @param $gid mixed id группы, где создана страница. Если параметр не указывать, возвращается список всех страниц, созданных текущим пользователем.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_pages_getTitles
+	 * @link http://vk.com/developers.php?oid=-1&p=pages.getTitles
+	 */
+	public function pages_getTitles($gid){
+		$params = array();
+		$params['gid'] = $gid;
+		return VKDoc_ReturnValue::factory('pages_getTitles',$this->Call('pages.getTitles',$params));
+
+	}
+	public function pages_parseWiki(array $p){ return new VKDoc_ReturnValue($this->Call('pages.parseWiki',$p));} // ERROR: Getting advanced info failed. Check logs
+	/**
+	 * возвращает статистику группы или приложения.
+	 * @param $gid mixed ID группы, статистику которой необходимо получить.
+	 * @param $aid mixed ID приложения, статистику которой необходимо получить.
+	 * @param $date_from mixed Начальная дата выводимой статистики в формате YYYY-MM-DD, пример: 2011-09-27 - 27 сентября 2011
+	 * @param $date_to mixed Конечная дата выводимой статистики в формате YYYY-MM-DD, пример: 2011-09-27 - 27 сентября 2011
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_stats_get
+	 * @link http://vk.com/developers.php?oid=-1&p=stats.get
+	 */
+	public function stats_get($gid, $aid, $date_from, $date_to){
+		$params = array();
+		$params['gid'] = $gid;
+		$params['aid'] = $aid;
+		$params['date_from'] = $date_from;
+		$params['date_to'] = $date_to;
+		return VKDoc_ReturnValue::factory('stats_get',$this->Call('stats.get',$params));
+
+	}
+	/**
+	 * возвращает краткую информацию о текущем пользователе.
+	 * @param $api_id mixed идентификатор приложения, присваивается при создании.
+	 * @param $sig mixed подпись запроса [[Взаимодействие приложения с API
+	 * @param $v mixed версия API, текущая версия равна '2.0'.
+	 * @param $format mixed формат возвращаемых данных – 'XML' или 'JSON'. По умолчанию 'XML'.
+	 * @param $test_mode mixed если этот параметр равен '1', разрешает тестовые запросы к данным приложения. При этом аутентификация не проводится и считается, что текущий пользователь – это автор приложения. Это позволяет тестировать приложение без загрузки его на сайт. По умолчанию '0'.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getUserInfo
+	 * @link http://vk.com/developers.php?oid=-1&p=getUserInfo
+	 */
+	public function getUserInfo($api_id, $sig, $v, $format = null, $test_mode = null){
+		$params = array();
+		$params['api_id'] = $api_id;
 		$params['sig'] = $sig;
 		$params['v'] = $v;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
 		if($format !== null){ $params['format'] = $format;}
-		if($locale !== null){ $params['locale'] = $locale;}
-		if($description !== null){ $params['description'] = $description;}
-		return VKDoc_ReturnValue::factory('secure_setLanguageValue',$this->Call('secure.setLanguageValue',$params));
+		if($test_mode !== null){ $params['test_mode'] = $test_mode;}
+		return VKDoc_ReturnValue::factory('getUserInfo',$this->Call('getUserInfo',$params));
 
 	}
 	/**
-	 * deletes a language phrase.
-	 * @param $random mixed any random number for providing a unique request.
-	 * @param $key mixed the key of the phrase that needs to be deleted.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $timestamp mixed UNIX-time of the server.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Secure Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_deleteLanguageValue
+	 * возвращает расширенную информацию о текущем пользователе.
+	 * @param $api_id mixed идентификатор приложения, присваивается при создании.
+	 * @param $sig mixed подпись запроса [[Взаимодействие приложения с API
+	 * @param $v mixed версия API, текущая версия равна '2.0'.
+	 * @param $format mixed формат возвращаемых данных – 'XML' или 'JSON'. По умолчанию 'XML'.
+	 * @param $test_mode mixed если этот параметр равен '1', разрешает тестовые запросы к данным приложения. При этом аутентификация не проводится и считается, что текущий пользователь – это автор приложения. Это позволяет тестировать приложение без загрузки его на сайт. По умолчанию '0'.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getUserInfoEx
+	 * @link http://vk.com/developers.php?oid=-1&p=getUserInfoEx
 	 */
-	public function secure_deleteLanguageValue($random, $key, $apiid, $timestamp, $v, $sig, $testmode = null, $format = null){
+	public function getUserInfoEx($api_id, $sig, $v, $format = null, $test_mode = null){
 		$params = array();
-		$params['random'] = $random;
-		$params['key'] = $key;
-		$params['apiid'] = $apiid;
-		$params['timestamp'] = $timestamp;
-		$params['v'] = $v;
+		$params['api_id'] = $api_id;
 		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
+		$params['v'] = $v;
 		if($format !== null){ $params['format'] = $format;}
-		return VKDoc_ReturnValue::factory('secure_deleteLanguageValue',$this->Call('secure.deleteLanguageValue',$params));
+		if($test_mode !== null){ $params['test_mode'] = $test_mode;}
+		return VKDoc_ReturnValue::factory('getUserInfoEx',$this->Call('getUserInfoEx',$params));
 
 	}
 	/**
-	 * returns the value of the stored variable.
-	 * @param $key mixed key from '0' to '4095', variable identifier.
-	 * @param $session mixed integer-valued session (room) identifier. Can be used for working with the variables 'session_vars' and 'instance_vars' with the keys from 2048 to 4095. If it is not specified, then it equals 0.
-	 * @param $userid mixed ID of the user whose variable is being read (if referencing to the 'user_vars' variables with the keys from 1280 to 1791).
+	 * сохраняет строку статуса приложения для последующего вывода в общем списке приложений на странице пользоваетеля.
+	 * @param $timestamp mixed UNIX-time сервера.
+	 * @param $random mixed любое случайное число для обеспечения уникальности запроса
+	 * @param $uid mixed ID пользователя, которому записывается статус.
+	 * @param $status mixed текст статуса, ограниченный '32' символами.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_saveAppStatus
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.saveAppStatus
+	 */
+	public function secure_saveAppStatus($timestamp, $random, $uid, $status){
+		$params = array();
+		$params['timestamp'] = $timestamp;
+		$params['random'] = $random;
+		$params['uid'] = $uid;
+		$params['status'] = $status;
+		return VKDoc_ReturnValue::factory('secure_saveAppStatus',$this->Call('secure.saveAppStatus',$params));
+
+	}
+	/**
+	 * возвращает строку статуса приложения, сохранённую при помощи secure.saveAppStatus.
+	 * @param $timestamp mixed UNIX-time сервера.
+	 * @param $random mixed любое случайное число для обеспечения уникальности запроса
+	 * @param $uid mixed ID пользователя, статус которого необходимо получить.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_secure_getAppStatus
+	 * @link http://vk.com/developers.php?oid=-1&p=secure.getAppStatus
+	 */
+	public function secure_getAppStatus($timestamp, $random, $uid){
+		$params = array();
+		$params['timestamp'] = $timestamp;
+		$params['random'] = $random;
+		$params['uid'] = $uid;
+		return VKDoc_ReturnValue::factory('secure_getAppStatus',$this->Call('secure.getAppStatus',$params));
+
+	}
+	/**
+	 * возвращает значение хранимой переменной.
+	 * @param $key mixed Ключ от '0' до '4095', идентификатор переменной.
+	 * @param $user_id mixed id пользователя, переменная которого считывается (если идёт обращение к переменным 'user_vars' с ключами от 1280 до 1791).
+	 * @param $session mixed целочисленный идентификатор сеанса (комнаты). Может быть использован для работы с переменными 'session_vars' и 'instance_vars' с ключами от 2048 до 4095. Если не указан, то равен 0.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getVariable
+	 * @link http://vk.com/developers.php?oid=-1&p=getVariable
 	 */
-	public function getVariable($key, $session = null, $userid = null){
+	public function getVariable($key, $user_id = null, $session = null){
 		$params = array();
 		$params['key'] = $key;
+		if($user_id !== null){ $params['user_id'] = $user_id;}
 		if($session !== null){ $params['session'] = $session;}
-		if($userid !== null){ $params['userid'] = $userid;}
 		return VKDoc_ReturnValue::factory('getVariable',$this->Call('getVariable',$params));
 
 	}
 	/**
-	 * returns the value of several variables.
-	 * @param $key mixed a key from '0' to '4095', identifier of the first variable.
-	 * @param $count mixed value from '1' to '32', number of variables.
-	 * @param $session mixed integer-valued session (room) identifier. Can be used for working with the variables 'session_vars' and 'instance_vars' with the keys from 2048 to 4095. If it is not specified, then it equals 0.
-	 * @param $userid mixed id of the user whose variable is being read out (if referencing to the 'user_vars' variables with the keys from 1280 to 1791).
+	 * возвращает значения нескольких переменных.
+	 * @param $key mixed Ключ от '0' до '4095', идентификатор первой переменной.
+	 * @param $count mixed Значение от '1' до '32', количество переменных.
+	 * @param $user_id mixed id пользователя, переменные которого считываются (если идёт обращение к переменным 'user_vars' с ключами от 1280 до 1791).
+	 * @param $session mixed целочисленный идентификатор сеанса (комнаты). Может быть использован для работы с переменными 'session_vars' и 'instance_vars' с ключами от 2048 до 4095. Если не указан, то равен 0.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getVariables
+	 * @link http://vk.com/developers.php?oid=-1&p=getVariables
 	 */
-	public function getVariables($key, $count, $session = null, $userid = null){
+	public function getVariables($key, $count, $user_id = null, $session = null){
 		$params = array();
 		$params['key'] = $key;
 		$params['count'] = $count;
+		if($user_id !== null){ $params['user_id'] = $user_id;}
 		if($session !== null){ $params['session'] = $session;}
-		if($userid !== null){ $params['userid'] = $userid;}
 		return VKDoc_ReturnValue::factory('getVariables',$this->Call('getVariables',$params));
 
 	}
 	/**
-	 * records the value of a variable.
-	 * @param $key mixed a key from '0' to '4095', variable identifier.
-	 * @param $value mixed the value that needs to be recorded into the variable. Row in 'utf-8', no more than '255' bytes.
-	 * @param $session mixed integer-valued session (room) identifier. Can be used for working with the variables 'session_vars' and 'instance_vars' with the keys from 2048 to 4095. If it is not specified, then it equals 0.
-	 * @param $userid mixed ID of the user whose variable is being read (if referencing to the 'user_vars' variables with the keys from 1540 to 1567).
+	 * записывает значение переменной.
+	 * @param $key mixed Ключ от '0' до '4095', идентификатор переменной.
+	 * @param $value mixed Значение, которое нужно записать в переменную.
+	 * @param $user_id mixed id пользователя, переменная которого записывается (если идёт обращение к общедоступным переменным 'user_vars' с ключами от 1504 до 1567).
+	 * @param $session mixed целочисленный идентификатор сеанса (комнаты). Может быть использован для работы с переменными 'session_vars' и 'instance_vars' с ключами от 2048 до 4095. Если не указан, то равен 0.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_putVariable
+	 * @link http://vk.com/developers.php?oid=-1&p=putVariable
 	 */
-	public function putVariable($key, $value, $session = null, $userid = null){
+	public function putVariable($key, $value, $user_id = null, $session = null){
 		$params = array();
 		$params['key'] = $key;
 		$params['value'] = $value;
+		if($user_id !== null){ $params['user_id'] = $user_id;}
 		if($session !== null){ $params['session'] = $session;}
-		if($userid !== null){ $params['userid'] = $userid;}
 		return VKDoc_ReturnValue::factory('putVariable',$this->Call('putVariable',$params));
 
 	}
 	/**
-	 * returns the table of records.
+	 * возвращает таблицу рекордов.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getHighScores
+	 * @link http://vk.com/developers.php?oid=-1&p=getHighScores
 	 */
 	public function getHighScores(){
 		$params = array();
@@ -1511,9 +2302,10 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * records the result of the current user into the table of records.
-	 * @param $score mixed user's high score for recording.
+	 * записывает результат текущего пользователя в таблицу рекордов.
+	 * @param $score mixed рекорд пользователя для записи.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_setUserScore
+	 * @link http://vk.com/developers.php?oid=-1&p=setUserScore
 	 */
 	public function setUserScore($score){
 		$params = array();
@@ -1522,23 +2314,25 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns the list of message order.
-	 * @param $session mixed integer-valued session (room) identifier; if this parameter is not specified, then by default the messages' will be returned from the room with the identifier '0'.
-	 * @param $messagestoget mixed number of messages that will be received (if this parameter is not specified, all unread messages are returned).
+	 * возвращает список очереди сообщений.
+	 * @param $messages_to_get mixed количество сообщений, которые будут получены (если параметр не указан, возвращаются все непрочитанные сообщения).
+	 * @param $session mixed целочисленный идентификатор сеанса (комнаты); если этот параметр не указан, то по умолчанию возвращаются сообщения из комнаты с идентификатором '0'.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getMessages
+	 * @link http://vk.com/developers.php?oid=-1&p=getMessages
 	 */
-	public function getMessages($session = null, $messagestoget = null){
+	public function getMessages($messages_to_get = null, $session = null){
 		$params = array();
+		if($messages_to_get !== null){ $params['messages_to_get'] = $messages_to_get;}
 		if($session !== null){ $params['session'] = $session;}
-		if($messagestoget !== null){ $params['messagestoget'] = $messagestoget;}
 		return VKDoc_ReturnValue::factory('getMessages',$this->Call('getMessages',$params));
 
 	}
 	/**
-	 * puts a message in a queue.
-	 * @param $message mixed the message entered by the user.
-	 * @param $session mixed integer-valued session (room) identifier; if this parameter is not specified, then by default the message will be sent to the room with the identifier '0'.
+	 * ставит сообщение в очередь.
+	 * @param $message mixed сообщение, введенное пользователем.
+	 * @param $session mixed целочисленный идентификатор сеанса (комнаты); если этот параметр не указан, то по умолчанию сообщение отправляется в комнату с идентификатором '0'.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_sendMessage
+	 * @link http://vk.com/developers.php?oid=-1&p=sendMessage
 	 */
 	public function sendMessage($message, $session = null){
 		$params = array();
@@ -1548,873 +2342,208 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns the current time.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getServerTime
+	 * возвращает список подписок пользователя.
+	 * @param $uid mixed идентификатор пользователя, список которого необходимо получить. Если параметр не задан, то считается, что он равен идентификатору текущего пользователя.
+	 * @param $offset mixed смещение относительно начала списка, для выборки определенного подмножества. Если параметр не задан, то считается, что он равен 0.
+	 * @param $count mixed количество возвращаемых идентификаторов пользователей. Если параметр не задан, то считается, что он равен 100. Максимальное значение параметра – 1000.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_subscriptions_get
+	 * @link http://vk.com/developers.php?oid=-1&p=subscriptions.get
 	 */
-	public function getServerTime(){
+	public function subscriptions_get($uid = null, $offset = null, $count = null){
 		$params = array();
-		return VKDoc_ReturnValue::factory('getServerTime',$this->Call('getServerTime',$params));
-
-	}
-	/**
-	 * returns ads for displaying to users.
-	 * @param $minprice mixed minimum cost-per-click in one hundredths of a vote. Used only when selecting from direct ads. Equals '0' by default.
-	 * @param $appsids mixed application IDs, separated by a comma, for selection from direct ads. This parameter is ignored if the parameter 'type' equals '1'.
-	 * @param $type mixed type of ads. '1' – only [http://vk.com/ads.php
-	 * @param $count mixed the number of returning ads (max. 20).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getAds
-	 */
-	public function getAds($minprice = null, $appsids = null, $type = null, $count = null){
-		$params = array();
-		if($minprice !== null){ $params['minprice'] = $minprice;}
-		if($appsids !== null){ $params['appsids'] = $appsids;}
-		if($type !== null){ $params['type'] = $type;}
-		if($count !== null){ $params['count'] = $count;}
-		return VKDoc_ReturnValue::factory('getAds',$this->Call('getAds',$params));
-
-	}
-	/**
-	 * sets a short name for an application to be displayed in the left menu, provided that the user has added the application to the left menu.
-	 * @param $name mixed short name for the application for the left menu, up to 17 characters in 'UTF' format.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_setNameInMenu
-	 */
-	public function setNameInMenu($name){
-		$params = array();
-		$params['name'] = $name;
-		return VKDoc_ReturnValue::factory('setNameInMenu',$this->Call('setNameInMenu',$params));
-
-	}
-	/**
-	 * saves information about a user's proposal.
-	 * @param $message mixed text of the proposal that will be accessible to other users.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_offers_edit
-	 */
-	public function offers_edit($message){
-		$params = array();
-		$params['message'] = $message;
-		return VKDoc_ReturnValue::factory('offers_edit',$this->Call('offers.edit',$params));
-
-	}
-	/**
-	 * opens a user's proposal for public access.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_offers_open
-	 */
-	public function offers_open(){
-		$params = array();
-		return VKDoc_ReturnValue::factory('offers_open',$this->Call('offers.open',$params));
-
-	}
-	/**
-	 * closes a user's proposal.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_offers_close
-	 */
-	public function offers_close(){
-		$params = array();
-		return VKDoc_ReturnValue::factory('offers_close',$this->Call('offers.close',$params));
-
-	}
-	/**
-	 * returns information about a user's proposal.
-	 * @param $uids mixed IDs of users, whose proposals need to be obtained (the current user by default).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_offers_get
-	 */
-	public function offers_get($uids = null){
-		$params = array();
-		if($uids !== null){ $params['uids'] = $uids;}
-		return VKDoc_ReturnValue::factory('offers_get',$this->Call('offers.get',$params));
-
-	}
-	/**
-	 * returns information about a random proposal according to the chosen filters.
-	 * @param $station mixed metro station ID, specified by the proposal owner in Places.
-	 * @param $district mixed district ID, specified by the proposal owner in Places.
-	 * @param $school mixed school ID of the proposal owner.
-	 * @param $edustatus mixed higher education status ID of the proposal owner.
-	 * @param $group mixed group ID of which the proposal owner should be a member.
-	 * @param $company mixed proposal owner's company.
-	 * @param $name mixed key words in the name of the proposal owner.
-	 * @param $interests mixed key words in the interests sections of the proposal owner.
-	 * @param $religion mixed proposal owner's religion.
-	 * @param $position mixed proposal owner's position.
-	 * @param $eduform mixed mode of study ID of the proposal owner.
-	 * @param $university mixed university ID of the proposal owner.
-	 * @param $city mixed city ID of the proposal owner.
-	 * @param $ageto mixed maximum age of the proposal owner.
-	 * @param $agefrom mixed minimum age of the proposal owner.
-	 * @param $text mixed key words in the proposal text.
-	 * @param $country mixed country ID of the proposal owner.
-	 * @param $sex mixed sex ID of the proposal owner.
-	 * @param $politic mixed political views ID of the proposal owner.
-	 * @param $status mixed relationship status ID of the proposal owner.
-	 * @param $photo mixed presence of a photo of the proposal owner.
-	 * @param $online mixed online status of the proposal owner.
-	 * @param $count mixed number of returning proposals. By default - '1'.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_offers_search
-	 */
-	public function offers_search($station = null, $district = null, $school = null, $edustatus = null, $group = null, $company = null, $name = null, $interests = null, $religion = null, $position = null, $eduform = null, $university = null, $city = null, $ageto = null, $agefrom = null, $text = null, $country = null, $sex = null, $politic = null, $status = null, $photo = null, $online = null, $count = null){
-		$params = array();
-		if($station !== null){ $params['station'] = $station;}
-		if($district !== null){ $params['district'] = $district;}
-		if($school !== null){ $params['school'] = $school;}
-		if($edustatus !== null){ $params['edustatus'] = $edustatus;}
-		if($group !== null){ $params['group'] = $group;}
-		if($company !== null){ $params['company'] = $company;}
-		if($name !== null){ $params['name'] = $name;}
-		if($interests !== null){ $params['interests'] = $interests;}
-		if($religion !== null){ $params['religion'] = $religion;}
-		if($position !== null){ $params['position'] = $position;}
-		if($eduform !== null){ $params['eduform'] = $eduform;}
-		if($university !== null){ $params['university'] = $university;}
-		if($city !== null){ $params['city'] = $city;}
-		if($ageto !== null){ $params['ageto'] = $ageto;}
-		if($agefrom !== null){ $params['agefrom'] = $agefrom;}
-		if($text !== null){ $params['text'] = $text;}
-		if($country !== null){ $params['country'] = $country;}
-		if($sex !== null){ $params['sex'] = $sex;}
-		if($politic !== null){ $params['politic'] = $politic;}
-		if($status !== null){ $params['status'] = $status;}
-		if($photo !== null){ $params['photo'] = $photo;}
-		if($online !== null){ $params['online'] = $online;}
-		if($count !== null){ $params['count'] = $count;}
-		return VKDoc_ReturnValue::factory('offers_search',$this->Call('offers.search',$params));
-
-	}
-	/**
-	 * returns information about the answers to a user's proposal.
-	 * @param $offset mixed offset needed for selecting a certain subcollection of answers.
-	 * @param $count mixed the number of answers needed to obtain.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_offers_getInboundResponses
-	 */
-	public function offers_getInboundResponses($offset = null, $count = null){
-		$params = array();
-		if($offset !== null){ $params['offset'] = $offset;}
-		if($count !== null){ $params['count'] = $count;}
-		return VKDoc_ReturnValue::factory('offers_getInboundResponses',$this->Call('offers.getInboundResponses',$params));
-
-	}
-	/**
-	 * returns information about the answers of the user to other proposals.
-	 * @param $offset mixed offset needed for selecting a certain subcollection of answers.
-	 * @param $count mixed number of answers needed to obtain.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_offers_getOutboundResponses
-	 */
-	public function offers_getOutboundResponses($offset = null, $count = null){
-		$params = array();
-		if($offset !== null){ $params['offset'] = $offset;}
-		if($count !== null){ $params['count'] = $count;}
-		return VKDoc_ReturnValue::factory('offers_getOutboundResponses',$this->Call('offers.getOutboundResponses',$params));
-
-	}
-	/**
-	 * accepts a proposal.
-	 * @param $uid mixed ID of the proposal owner to which an answer is given.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_offers_accept
-	 */
-	public function offers_accept($uid){
-		$params = array();
-		$params['uid'] = $uid;
-		return VKDoc_ReturnValue::factory('offers_accept',$this->Call('offers.accept',$params));
-
-	}
-	/**
-	 * refuses a proposal.
-	 * @param $uid mixed ID of the proposal owner, the answer to which is being refused.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_offers_refuse
-	 */
-	public function offers_refuse($uid, $apiid, $v, $sig, $testmode = null, $format = null){
-		$params = array();
-		$params['uid'] = $uid;
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
-		return VKDoc_ReturnValue::factory('offers_refuse',$this->Call('offers.refuse',$params));
-
-	}
-	/**
-	 * marks answers to a proposal as viewed.
-	 * @param $uids mixed IDs of users that have answered the proposal of the user, separated by a comma.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_offers_setResponseViewed
-	 */
-	public function offers_setResponseViewed($uids, $apiid, $v, $sig, $testmode = null, $format = null){
-		$params = array();
-		$params['uids'] = $uids;
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
-		return VKDoc_ReturnValue::factory('offers_setResponseViewed',$this->Call('offers.setResponseViewed',$params));
-
-	}
-	/**
-	 * deletes answers to a user's proposal.
-	 * @param $uids mixed ID's of users that have answered the proposal of the user, separated by a comma.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_offers_deleteResponses
-	 */
-	public function offers_deleteResponses($uids, $apiid, $v, $sig, $testmode = null, $format = null){
-		$params = array();
-		$params['uids'] = $uids;
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
-		return VKDoc_ReturnValue::factory('offers_deleteResponses',$this->Call('offers.deleteResponses',$params));
-
-	}
-	/**
-	 * returns the user's list of questions.
-	 * @param $count mixed number of questions needed to obtain.
-	 * @param $offset mixed offset needed for selecting a certain subcollection of questions.
-	 * @param $namecase mixed grammatical case for the user's name declension. Possible values: nominative – 'nom', genitive– 'gen', dative – 'dat', accusative – 'acc', instrumental – 'ins', prepositional – 'abl'. 'nom' by default.
-	 * @param $needprofiles mixed determines whether brief information about the question author in the answer is needed (fields name, photo and online). Values from 0 to 3. The higher the value, the larger the photo is in the field "photo".
-	 * @param $qid mixed ID of an individual question, information about which is needed to obtain. If qid is specified, then uids are not taken into consideration.
-	 * @param $sort mixed result sorting (0 - by update date in descending order, 1 - by creation date in ascending order, 2 - by creation date in descending order).
-	 * @param $uids mixed IDs of users to whom the questions belong, separated by a comma.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_questions_get
-	 */
-	public function questions_get($count = null, $offset = null, $namecase = null, $needprofiles = null, $qid = null, $sort = null, $uids = null){
-		$params = array();
-		if($count !== null){ $params['count'] = $count;}
-		if($offset !== null){ $params['offset'] = $offset;}
-		if($namecase !== null){ $params['namecase'] = $namecase;}
-		if($needprofiles !== null){ $params['needprofiles'] = $needprofiles;}
-		if($qid !== null){ $params['qid'] = $qid;}
-		if($sort !== null){ $params['sort'] = $sort;}
-		if($uids !== null){ $params['uids'] = $uids;}
-		return VKDoc_ReturnValue::factory('questions_get',$this->Call('questions.get',$params));
-
-	}
-	/**
-	 * edits question information.
-	 * @param $type mixed new type of question.
-	 * @param $text mixed new question text.
-	 * @param $qid mixed ID of the question to be edited.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_questions_edit
-	 */
-	public function questions_edit($type, $text, $qid){
-		$params = array();
-		$params['type'] = $type;
-		$params['text'] = $text;
-		$params['qid'] = $qid;
-		return VKDoc_ReturnValue::factory('questions_edit',$this->Call('questions.edit',$params));
-
-	}
-	/**
-	 * creates a new question.
-	 * @param $type mixed type of the new question.
-	 * @param $text mixed new question text.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_questions_add
-	 */
-	public function questions_add($type, $text){
-		$params = array();
-		$params['type'] = $type;
-		$params['text'] = $text;
-		return VKDoc_ReturnValue::factory('questions_add',$this->Call('questions.add',$params));
-
-	}
-	/**
-	 * deletes a question.
-	 * @param $qid mixed ID of the question to be deleted.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_questions_delete
-	 */
-	public function questions_delete($qid){
-		$params = array();
-		$params['qid'] = $qid;
-		return VKDoc_ReturnValue::factory('questions_delete',$this->Call('questions.delete',$params));
-
-	}
-	/**
-	 * returns a list of found questions.
-	 * @param $count mixed the number of questions needed to obtain.
-	 * @param $offset mixed offset required for selecting a certain subcollection of questions.
-	 * @param $namecase mixed grammatical case for the user's name declension. Possible values: nominative – 'nom', genitive– 'gen', dative – 'dat', accusative – 'acc', instrumental – 'ins', prepositional – 'abl'. 'nom' by default.
-	 * @param $needprofiles mixed determines whether brief information about the question author is required in the response (the fields name, photo and online). Values from 0 to 3. The higher the value, the larger the photo in the field "photo".
-	 * @param $sort mixed sorting order for results (0 - by date added, 1 - by number of comments).
-	 * @param $type mixed ID the type of questions among which search needs to be conducted.
-	 * @param $text mixed key words for searching questions.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_questions_search
-	 */
-	public function questions_search($count = null, $offset = null, $namecase = null, $needprofiles = null, $sort = null, $type = null, $text = null){
-		$params = array();
-		if($count !== null){ $params['count'] = $count;}
-		if($offset !== null){ $params['offset'] = $offset;}
-		if($namecase !== null){ $params['namecase'] = $namecase;}
-		if($needprofiles !== null){ $params['needprofiles'] = $needprofiles;}
-		if($sort !== null){ $params['sort'] = $sort;}
-		if($type !== null){ $params['type'] = $type;}
-		if($text !== null){ $params['text'] = $text;}
-		return VKDoc_ReturnValue::factory('questions_search',$this->Call('questions.search',$params));
-
-	}
-	/**
-	 * returns a list of all possible types of questions.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_questions_getTypes
-	 */
-	public function questions_getTypes(){
-		$params = array();
-		return VKDoc_ReturnValue::factory('questions_getTypes',$this->Call('questions.getTypes',$params));
-
-	}
-	/**
-	 * returns a list of list of questions that the user had answered.
-	 * @param $offset mixed offset, needed for selecting a certain subcollection of questions.
-	 * @param $count mixed the number of questions needed to obtain.
-	 * @param $namecase mixed grammatical case for the user's name declension. Possible values: nominative – 'nom', genitive– 'gen', dative – 'dat', accusative – 'acc', instrumental – 'ins', prepositional – 'abl'. 'nom' by default.
-	 * @param $needprofiles mixed determines whether brief information about the question author is required in the response (the fields name, photo and online). Values from 0 to 3. The higher the value, the larger the photo in the field "photo".
-	 * @param $sort mixed sorting order for results (0 - by date updated in descending order, 1 - by creation date in ascending order, 2 - by creation order in descending order).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_questions_getOutbound
-	 */
-	public function questions_getOutbound($offset = null, $count = null, $namecase = null, $needprofiles = null, $sort = null){
-		$params = array();
-		if($offset !== null){ $params['offset'] = $offset;}
-		if($count !== null){ $params['count'] = $count;}
-		if($namecase !== null){ $params['namecase'] = $namecase;}
-		if($needprofiles !== null){ $params['needprofiles'] = $needprofiles;}
-		if($sort !== null){ $params['sort'] = $sort;}
-		return VKDoc_ReturnValue::factory('questions_getOutbound',$this->Call('questions.getOutbound',$params));
-
-	}
-	/**
-	 * returns answers to a question.
-	 * @param $qid mixed question ID.
-	 * @param $offset mixed offset, needed for selecting a certain subcollection of answers.
-	 * @param $count mixed the number of answers needed to obtain.
-	 * @param $needprofiles mixed determines whether brief information about the question author is required in the response (the fields name, photo and online). Values from 0 to 3. The higher the value, the larger the photo in the field "photo".
-	 * @param $sort mixed sorting order for results (1 - by date descending; sorts by date ascending by default).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_questions_getAnswers
-	 */
-	public function questions_getAnswers($qid, $offset = null, $count = null, $needprofiles = null, $sort = null){
-		$params = array();
-		$params['qid'] = $qid;
-		if($offset !== null){ $params['offset'] = $offset;}
-		if($count !== null){ $params['count'] = $count;}
-		if($needprofiles !== null){ $params['needprofiles'] = $needprofiles;}
-		if($sort !== null){ $params['sort'] = $sort;}
-		return VKDoc_ReturnValue::factory('questions_getAnswers',$this->Call('questions.getAnswers',$params));
-
-	}
-	/**
-	 * adds an answer to a question.
-	 * @param $text mixed answer text.
-	 * @param $qid mixed question ID.
-	 * @param $uid mixed ID of author of the question to which an answer is being added.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_questions_addAnswer
-	 */
-	public function questions_addAnswer($text, $qid, $uid){
-		$params = array();
-		$params['text'] = $text;
-		$params['qid'] = $qid;
-		$params['uid'] = $uid;
-		return VKDoc_ReturnValue::factory('questions_addAnswer',$this->Call('questions.addAnswer',$params));
-
-	}
-	/**
-	 * deletes an answer to a question.
-	 * @param $aid mixed ID of the question to be deleted.
-	 * @param $uid mixed ID of author of the question, the answer to which is being deleted.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_questions_deleteAnswer
-	 */
-	public function questions_deleteAnswer($aid, $uid){
-		$params = array();
-		$params['aid'] = $aid;
-		$params['uid'] = $uid;
-		return VKDoc_ReturnValue::factory('questions_deleteAnswer',$this->Call('questions.deleteAnswer',$params));
-
-	}
-	/**
-	 * user joins an answer using this.
-	 * @param $aid mixed ID of the approving answer.
-	 * @param $uid mixed ID of the author of the question, to which the answer is being approved.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_questions_joinAnswer
-	 */
-	public function questions_joinAnswer($aid, $uid){
-		$params = array();
-		$params['aid'] = $aid;
-		$params['uid'] = $uid;
-		return VKDoc_ReturnValue::factory('questions_joinAnswer',$this->Call('questions.joinAnswer',$params));
-
-	}
-	/**
-	 * returns the list of users that have joined an answer.
-	 * @param $uid mixed ID of the author of the question.
-	 * @param $aid mixed ID of the answer.
-	 * @param $offset mixed offset, needed for selecting a certain subcollection of users.
-	 * @param $count mixed the number of users needed to obtain.
-	 * @param $sort mixed sorting order for results (1 - by date descending, by default - date ascending).
-	 * @param $needprofiles mixed determines whether brief information about the question author is required in the response (the fields name, photo and online). Values from 0 to 3. The higher the value, the larger the photo in the field "photo".
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_questions_getAnswerVotes
-	 */
-	public function questions_getAnswerVotes($uid, $aid, $offset = null, $count = null, $sort = null, $needprofiles = null){
-		$params = array();
-		$params['uid'] = $uid;
-		$params['aid'] = $aid;
-		if($offset !== null){ $params['offset'] = $offset;}
-		if($count !== null){ $params['count'] = $count;}
-		if($sort !== null){ $params['sort'] = $sort;}
-		if($needprofiles !== null){ $params['needprofiles'] = $needprofiles;}
-		return VKDoc_ReturnValue::factory('questions_getAnswerVotes',$this->Call('questions.getAnswerVotes',$params));
-
-	}
-	/**
-	 * marks the list of answers to questions of a user as viewed.
-	 * @param $aids mixed list of answer IDs that need to be marked as read.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_questions_markAsViewed
-	 */
-	public function questions_markAsViewed($aids = null){
-		$params = array();
-		if($aids !== null){ $params['aids'] = $aids;}
-		return VKDoc_ReturnValue::factory('questions_markAsViewed',$this->Call('questions.markAsViewed',$params));
-
-	}
-	/**
-	 * returns a list of notes of a user.
-	 * @param $offset mixed offset, needed for selection of a certain subcollection of notes.
-	 * @param $count mixed the number of messages needed to obtain (no more than 100). Set to 20 by default.
-	 * @param $sort mixed sorting order for results (0 - by creation date in descending order, 1 - by creation date in ascending order).
-	 * @param $nids mixed IDs of notes, separated by a comma, included into the selection by uid.
-	 * @param $uid mixed user ID whose note needs to be returned (the current user by default).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_get
-	 */
-	public function notes_get($offset = null, $count = null, $sort = null, $nids = null, $uid = null){
-		$params = array();
-		if($offset !== null){ $params['offset'] = $offset;}
-		if($count !== null){ $params['count'] = $count;}
-		if($sort !== null){ $params['sort'] = $sort;}
-		if($nids !== null){ $params['nids'] = $nids;}
 		if($uid !== null){ $params['uid'] = $uid;}
-		return VKDoc_ReturnValue::factory('notes_get',$this->Call('notes.get',$params));
-
-	}
-	/**
-	 * returns the current note of a user.
-	 * @param $nid mixed ID of the requested note.
-	 * @param $needwiki mixed determines whether wiki presentation is required in the answer to the note (works only if notes of the current user are requested).
-	 * @param $ownerid mixed user ID to whom the note belongs (the current user by default).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_getById
-	 */
-	public function notes_getById($nid, $needwiki = null, $ownerid = null){
-		$params = array();
-		$params['nid'] = $nid;
-		if($needwiki !== null){ $params['needwiki'] = $needwiki;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		return VKDoc_ReturnValue::factory('notes_getById',$this->Call('notes.getById',$params));
-
-	}
-	/**
-	 * returns a list of notes of a user's friends.
-	 * @param $offset mixed offset, needed for selection of a certain subcollection of notes.
-	 * @param $count mixed the number of messages needed to obtain (no more than 100). Set to 20 by default.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_getFriendsNotes
-	 */
-	public function notes_getFriendsNotes($offset = null, $count = null){
-		$params = array();
 		if($offset !== null){ $params['offset'] = $offset;}
 		if($count !== null){ $params['count'] = $count;}
-		return VKDoc_ReturnValue::factory('notes_getFriendsNotes',$this->Call('notes.getFriendsNotes',$params));
+		return VKDoc_ReturnValue::factory('subscriptions_get',$this->Call('subscriptions.get',$params));
 
 	}
 	/**
-	 * creates a new note.
-	 * @param $title mixed note title.
-	 * @param $text mixed note text.
-	 * @param $commentprivacy mixed note commenting access level. Values: 0 – all users, 1 – only friends, 2 – only friends and friends of friends, 3 - only the user.
-	 * @param $privacy mixed note access level. Values: 0 – all users, 1 – only friends, 2 – only friends and friends of friends, 3 - only the user.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_add
+	 * возвращает список подписчиков пользователя.
+	 * @param $uid mixed идентификатор пользователя, список которого необходимо получить. Если параметр не задан, то считается, что он равен идентификатору текущего пользователя.
+	 * @param $offset mixed смещение, относительно начала списка, для выборки определенного подмножества. Если параметр не задан, то считается, что он равен 0.
+	 * @param $count mixed количество возвращаемых идентификаторов пользователей. Если параметр не задан, то считается, что он равен 100. Максимальное значение параметра 1000.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_subscriptions_getFollowers
+	 * @link http://vk.com/developers.php?oid=-1&p=subscriptions.getFollowers
 	 */
-	public function notes_add($title, $text, $commentprivacy = null, $privacy = null){
+	public function subscriptions_getFollowers($uid = null, $offset = null, $count = null){
 		$params = array();
-		$params['title'] = $title;
-		$params['text'] = $text;
-		if($commentprivacy !== null){ $params['commentprivacy'] = $commentprivacy;}
-		if($privacy !== null){ $params['privacy'] = $privacy;}
-		return VKDoc_ReturnValue::factory('notes_add',$this->Call('notes.add',$params));
-
-	}
-	/**
-	 * edits a note of a user.
-	 * @param $nid mixed ID of the note to be edited.
-	 * @param $text mixed note text.
-	 * @param $title mixed note title.
-	 * @param $commentprivacy mixed note commenting access level. Values: 0 – all users, 1 – only friends, 2 – only friends and friends of friends, 3 - only the user.
-	 * @param $privacy mixed note access level. Values: 0 – all users, 1 – only friends, 2 – only friends and friends of friends, 3 - only the user.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_edit
-	 */
-	public function notes_edit($nid, $text, $title, $commentprivacy = null, $privacy = null){
-		$params = array();
-		$params['nid'] = $nid;
-		$params['text'] = $text;
-		$params['title'] = $title;
-		if($commentprivacy !== null){ $params['commentprivacy'] = $commentprivacy;}
-		if($privacy !== null){ $params['privacy'] = $privacy;}
-		return VKDoc_ReturnValue::factory('notes_edit',$this->Call('notes.edit',$params));
-
-	}
-	/**
-	 * deletes a note of a user.
-	 * @param $nid mixed ID of the note to be deleted.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_delete
-	 */
-	public function notes_delete($nid){
-		$params = array();
-		$params['nid'] = $nid;
-		return VKDoc_ReturnValue::factory('notes_delete',$this->Call('notes.delete',$params));
-
-	}
-	/**
-	 * returns a list of note comments.
-	 * @param $nid mixed ID of the note to which comments need to be returned.
-	 * @param $offset mixed offset, needed for selecting a certain subcollection of comments.
-	 * @param $count mixed number of comments needed to obtain (no more than 100). Set to 20 by default.
-	 * @param $sort mixed sorting order for results (0 - by date added in ascending order, 1 - by date added in descending order).
-	 * @param $ownerid mixed user ID to whom the note belongs (the current user by default).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_getComments
-	 */
-	public function notes_getComments($nid, $offset = null, $count = null, $sort = null, $ownerid = null){
-		$params = array();
-		$params['nid'] = $nid;
+		if($uid !== null){ $params['uid'] = $uid;}
 		if($offset !== null){ $params['offset'] = $offset;}
 		if($count !== null){ $params['count'] = $count;}
-		if($sort !== null){ $params['sort'] = $sort;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		return VKDoc_ReturnValue::factory('notes_getComments',$this->Call('notes.getComments',$params));
+		return VKDoc_ReturnValue::factory('subscriptions_getFollowers',$this->Call('subscriptions.getFollowers',$params));
 
 	}
 	/**
-	 * adds a new comment to a note.
-	 * @param $nid mixed ID of the note to which a comment needs to be added.
-	 * @param $message mixed comment text (minimum length - 2 characters).
-	 * @param $ownerid mixed user ID to whom the note belongs (the current user by default).
-	 * @param $replyto mixed ID of the user whose comment is being replied to (will not be returned if the comment to be added is not a reply to another user's comment).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_createComment
-	 */
-	public function notes_createComment($nid, $message, $ownerid = null, $replyto = null){
-		$params = array();
-		$params['nid'] = $nid;
-		$params['message'] = $message;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		if($replyto !== null){ $params['replyto'] = $replyto;}
-		return VKDoc_ReturnValue::factory('notes_createComment',$this->Call('notes.createComment',$params));
-
-	}
-	/**
-	 * edits a note comment text.
-	 * @param $id mixed ID of the comment that needs to be edited.
-	 * @param $message mixed comment's new text (minimum length - 2 characters).
-	 * @param $ownerid mixed user ID to whom the album belongs (the current user by default).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_editComment
-	 */
-	public function notes_editComment($id, $message, $ownerid = null){
-		$params = array();
-		$params['id'] = $id;
-		$params['message'] = $message;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		return VKDoc_ReturnValue::factory('notes_editComment',$this->Call('notes.editComment',$params));
-
-	}
-	/**
-	 * deletes a note comment.
-	 * @param $id mixed ID of the comment that needs to be deleted.
-	 * @param $ownerid mixed user ID to whom the note belongs (the current user by default).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_deleteComment
-	 */
-	public function notes_deleteComment($id, $ownerid = null){
-		$params = array();
-		$params['id'] = $id;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		return VKDoc_ReturnValue::factory('notes_deleteComment',$this->Call('notes.deleteComment',$params));
-
-	}
-	/**
-	 * restores a note comment.
-	 * @param $id mixed ID of the comment that needs to be restored.
-	 * @param $ownerid mixed user ID to whom the note belongs (the current user by default).
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_notes_restoreComment
-	 */
-	public function notes_restoreComment($id, $ownerid = null){
-		$params = array();
-		$params['id'] = $id;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		return VKDoc_ReturnValue::factory('notes_restoreComment',$this->Call('notes.restoreComment',$params));
-
-	}
-	/**
-	 * returns a wiki page.
-	 * @param $pid mixed ID of the wiki page. Instead of 'pid', the title parameter can be rendered - the name of the wiki page.
-	 * @param $gid mixed ID of the group where the page was created. Instead of 'gid', the 'mid' parameter can be rendered - the ID of the wiki page creator. In this case, a request will not be to the group page, but to one of the personal wiki pages of the user.
-	 * @param $needhtml mixed determines whether html representation of the wiki page is required in the response or not.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_pages_get
-	 */
-	public function pages_get($pid, $gid, $needhtml = null){
-		$params = array();
-		$params['pid'] = $pid;
-		$params['gid'] = $gid;
-		if($needhtml !== null){ $params['needhtml'] = $needhtml;}
-		return VKDoc_ReturnValue::factory('pages_get',$this->Call('pages.get',$params));
-
-	}
-	/**
-	 * save the wiki page text.
-	 * @param $Text mixed new text of the page in wiki format.
-	 * @param $gid mixed ID of the group where the page was created. Instead of 'gid', the parameters 'mid' may be rendered - the ID of the creator of the wiki page. In this case, the request will not be to the page of the group, but to one of the personal wiki pages of the user.
-	 * @param $pid mixed ID of the wiki page. Instead of 'pid', the parameter 'title' may be rendered - the name of the wiki page. In this case, if there is currently no page with this title, it will be created.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_pages_save
-	 */
-	public function pages_save($Text, $gid, $pid){
-		$params = array();
-		$params['Text'] = $Text;
-		$params['gid'] = $gid;
-		$params['pid'] = $pid;
-		return VKDoc_ReturnValue::factory('pages_save',$this->Call('pages.save',$params));
-
-	}
-	/**
-	 * saves access settings to the wiki page.
-	 * @param $edit mixed the value of editing access settings; you can view the description of values on the page devoted to the [[pages.get
-	 * @param $view mixed the value of viewing access settings; you can view the description of values on the page devoted to the [[pages.get
-	 * @param $gid mixed ID of the group where the page was created.
-	 * @param $pid mixed ID of the wiki page.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_pages_saveAccess
-	 */
-	public function pages_saveAccess($edit, $view, $gid, $pid){
-		$params = array();
-		$params['edit'] = $edit;
-		$params['view'] = $view;
-		$params['gid'] = $gid;
-		$params['pid'] = $pid;
-		return VKDoc_ReturnValue::factory('pages_saveAccess',$this->Call('pages.saveAccess',$params));
-
-	}
-	/**
-	 * returns the old wiki page version.
-	 * @param $hid mixed ID of the wiki page version.
-	 * @param $gid mixed ID of the group where the page was created.
-	 * @param $needhtml mixed determines whether html representation of the wiki page version is required in the response or not.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_pages_getVersion
-	 */
-	public function pages_getVersion($hid, $gid, $needhtml = null){
-		$params = array();
-		$params['hid'] = $hid;
-		$params['gid'] = $gid;
-		if($needhtml !== null){ $params['needhtml'] = $needhtml;}
-		return VKDoc_ReturnValue::factory('pages_getVersion',$this->Call('pages.getVersion',$params));
-
-	}
-	/**
-	 * returns the list of all old wiki page versions.
-	 * @param $gid mixed ID of the group where the page was created.
-	 * @param $pid mixed ID of the wiki page.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_pages_getHistory
-	 */
-	public function pages_getHistory($gid, $pid){
-		$params = array();
-		$params['gid'] = $gid;
-		$params['pid'] = $pid;
-		return VKDoc_ReturnValue::factory('pages_getHistory',$this->Call('pages.getHistory',$params));
-
-	}
-	/**
-	 * returns the list of wiki pages in a group.
-	 * @param $gid mixed ID of the group where the page was created. If this parameter is not specified, returns a list of all pages created by the current user.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_pages_getTitles
-	 */
-	public function pages_getTitles($gid){
-		$params = array();
-		$params['gid'] = $gid;
-		return VKDoc_ReturnValue::factory('pages_getTitles',$this->Call('pages.getTitles',$params));
-
-	}
-	/**
-	 * returns the html representation of wiki markup.
-	 * @param $Text mixed text in wiki format.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_parseWiki
-	 */
-	public function parseWiki($Text, $apiid, $v, $sig, $testmode = null, $format = null){
-		$params = array();
-		$params['Text'] = $Text;
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
-		return VKDoc_ReturnValue::factory('parseWiki',$this->Call('parseWiki',$params));
-
-	}
-	/**
-	 * returns brief information on the current user.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getUserInfo
-	 */
-	public function getUserInfo($apiid, $v, $sig, $testmode = null, $format = null){
-		$params = array();
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
-		return VKDoc_ReturnValue::factory('getUserInfo',$this->Call('getUserInfo',$params));
-
-	}
-	/**
-	 * returns advanced information on the current user.
-	 * @param $apiid mixed application identifier assigned during creation.
-	 * @param $v mixed API version, the current version equals '2.0'.
-	 * @param $sig mixed request signature [[Application Interaction with API
-	 * @param $testmode mixed allows test requests to application data if this parameter equals '1'. Authentication is not carried out and it is considered that the current user is the creator of the application. This allows for testing the application without uploading it to the site. By default  – '0'.
-	 * @param $format mixed return data format – 'XML' or 'JSON'. 'XML' by default.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_getUserInfoEx
-	 */
-	public function getUserInfoEx($apiid, $v, $sig, $testmode = null, $format = null){
-		$params = array();
-		$params['apiid'] = $apiid;
-		$params['v'] = $v;
-		$params['sig'] = $sig;
-		if($testmode !== null){ $params['testmode'] = $testmode;}
-		if($format !== null){ $params['format'] = $format;}
-		return VKDoc_ReturnValue::factory('getUserInfoEx',$this->Call('getUserInfoEx',$params));
-
-	}
-	/**
-	 * returns a list of all received or sent messages of the current user.
-	 * @param $previewlength mixed number of words that need to be cut. Enter '0' if you do not want to cut the message. (by default – '90').
-	 * @param $timeoffset mixed Maximum time elapsed from the moment of sending the message up until the current time in seconds. '0' if you want to receive message without any time limitations.
-	 * @param $filters mixed filter of returning messages: 1 - only unread; 2 - not from chat; 4 - only from friends. If set to '4', then '1' and '2' are not taken into account.
-	 * @param $count mixed number of messages needed to obtain (no more than 100).
-	 * @param $offset mixed offset required for selecting a certain subcollection of messages.
-	 * @param $out mixed if this parameter equals 1, the server will return sent messages.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_get
-	 */
-	public function messages_get($previewlength = null, $timeoffset = null, $filters = null, $count = null, $offset = null, $out = null){
-		$params = array();
-		if($previewlength !== null){ $params['previewlength'] = $previewlength;}
-		if($timeoffset !== null){ $params['timeoffset'] = $timeoffset;}
-		if($filters !== null){ $params['filters'] = $filters;}
-		if($count !== null){ $params['count'] = $count;}
-		if($offset !== null){ $params['offset'] = $offset;}
-		if($out !== null){ $params['out'] = $out;}
-		return VKDoc_ReturnValue::factory('messages_get',$this->Call('messages.get',$params));
-
-	}
-	/**
-	 * returns messages by their ID.
-	 * @param $mid mixed ID od the message if only one message is required. If the parameter "mids" is indicated, then this parameter is ignored.
-	 * @param $mids mixed ID od messages that need to be returned, separated by a comma  (no more than 100).
-	 * @param $previewlength mixed number of words that need to be cut. Enter '0' if you do not want to cut the message. (by default – '90').
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_getById
-	 */
-	public function messages_getById($mid, $mids, $previewlength = null){
-		$params = array();
-		$params['mid'] = $mid;
-		$params['mids'] = $mids;
-		if($previewlength !== null){ $params['previewlength'] = $previewlength;}
-		return VKDoc_ReturnValue::factory('messages_getById',$this->Call('messages.getById',$params));
-
-	}
-	/**
-	 * returns a list of dialogues of the current user.
-	 * @param $previewlength mixed Number of characters that need to be cut. Indicate '0' if you do not want to cut the message. (by default – '90').
-	 * @param $count mixed number of dialogues necessary to receive (no more than 100).
-	 * @param $offset mixed offset, required for selecting a certain subcollection of dialogues.
+	 * возвращает список диалогов текущего пользователя.
+	 * @param $uid mixed идентификатор пользователя, последнее сообщение в переписке с которым необходимо вернуть.
+	 * @param $chat_id mixed идентификатор беседы, последнее сообщение в которой необходимо вернуть.
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества диалогов.
+	 * @param $count mixed количество диалогов, которое необходимо получить (но не более 100).
+	 * @param $preview_length mixed Количество символов, по которому нужно обрезать сообщение. Укажите 0, если Вы не хотите обрезать сообщение. (по умолчанию сообщения не обрезаются).
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_getDialogs
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.getDialogs
 	 */
-	public function messages_getDialogs($previewlength = null, $count = null, $offset = null){
+	public function messages_getDialogs($uid = null, $chat_id = null, $offset = null, $count = null, $preview_length = null){
 		$params = array();
-		if($previewlength !== null){ $params['previewlength'] = $previewlength;}
-		if($count !== null){ $params['count'] = $count;}
+		if($uid !== null){ $params['uid'] = $uid;}
+		if($chat_id !== null){ $params['chat_id'] = $chat_id;}
 		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		if($preview_length !== null){ $params['preview_length'] = $preview_length;}
 		return VKDoc_ReturnValue::factory('messages_getDialogs',$this->Call('messages.getDialogs',$params));
 
 	}
 	/**
-	 * returns a list of all messages of the current user found in the search bar according to the entered text.
-	 * @param $q mixed substring by which the search will be performed.
-	 * @param $count mixed number of messages necessary to receive (no more than 100).
-	 * @param $offset mixed offset, required for selecting a certain subcollection of messages found.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_search
+	 * возвращает историю сообщений для данного пользователя.
+	 * @param $uid mixed идентификатор пользователя, историю переписки с которым необходимо вернуть. Является необязательным параметром в случае с истории сообщений в беседе.
+	 * @param $chat_id mixed идентификатор беседы, историю переписки в которой необходимо вернуть.
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества сообщений.
+	 * @param $count mixed количество сообщений, которое необходимо получить (но не более 100).
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_getHistory
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.getHistory
 	 */
-	public function messages_search($q, $count = null, $offset = null){
+	public function messages_getHistory($uid, $chat_id, $offset = null, $count = null){
+		$params = array();
+		$params['uid'] = $uid;
+		$params['chat_id'] = $chat_id;
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		return VKDoc_ReturnValue::factory('messages_getHistory',$this->Call('messages.getHistory',$params));
+
+	}
+	/**
+	 * возвращает сообщения по их ID.
+	 * @param $mid mixed ID сообщения, если необходимо получить одно сообщение. Если указан параметр mids, этот параметр игнорируется.
+	 * @param $mids mixed ID сообщений, которые необходимо вернуть, разделенные запятыми (не более 100).
+	 * @param $preview_length mixed Количество слов, по которому нужно обрезать сообщение. Укажите 0, если Вы не хотите обрезать сообщение. (по умолчанию сообщения не обрезаются).
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_getById
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.getById
+	 */
+	public function messages_getById($mid, $mids, $preview_length = null){
+		$params = array();
+		$params['mid'] = $mid;
+		$params['mids'] = $mids;
+		if($preview_length !== null){ $params['preview_length'] = $preview_length;}
+		return VKDoc_ReturnValue::factory('messages_getById',$this->Call('messages.getById',$params));
+
+	}
+	/**
+	 * возвращает список входящих либо исходящих сообщений текущего пользователя.
+	 * @param $out mixed если этот параметр равен 1, сервер вернет исходящие сообщения.
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества сообщений.
+	 * @param $count mixed количество сообщений, которое необходимо получить (но не более 100).
+	 * @param $filters mixed фильтр возвращаемых сообщений: 1 - только непрочитанные; 2 - не из чата; 4 - сообщения от друзей. Если установлен флаг "4", то флаги "1" и "2" не учитываются.
+	 * @param $preview_length mixed Количество символов, по которому нужно обрезать сообщение. Укажите 0, если Вы не хотите обрезать сообщение. (по умолчанию сообщения не обрезаются). Обратите внимание что сообщения обрезаются по словам.
+	 * @param $time_offset mixed Максимальное время, прошедшее с момента отправки сообщения до текущего момента в секундах. 0, если Вы хотите получить сообщения любой давности.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_get
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.get
+	 */
+	public function messages_get($out = null, $offset = null, $count = null, $filters = null, $preview_length = null, $time_offset = null){
+		$params = array();
+		if($out !== null){ $params['out'] = $out;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		if($filters !== null){ $params['filters'] = $filters;}
+		if($preview_length !== null){ $params['preview_length'] = $preview_length;}
+		if($time_offset !== null){ $params['time_offset'] = $time_offset;}
+		return VKDoc_ReturnValue::factory('messages_get',$this->Call('messages.get',$params));
+
+	}
+	/**
+	 * возвращает список диалогов и бесед пользователя по поисковому запросу.
+	 * @param $q mixed подстрока, по которой будет производиться поиск.
+	 * @param $fields mixed поля профилей собеседников, которые необходимо вернуть.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_searchDialogs
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.searchDialogs
+	 */
+	public function messages_searchDialogs($q, $fields = null){
 		$params = array();
 		$params['q'] = $q;
-		if($count !== null){ $params['count'] = $count;}
+		if($fields !== null){ $params['fields'] = $fields;}
+		return VKDoc_ReturnValue::factory('messages_searchDialogs',$this->Call('messages.searchDialogs',$params));
+
+	}
+	/**
+	 * возвращает найденные сообщения текущего пользователя по введенной строке поиска.
+	 * @param $q mixed подстрока, по которой будет производиться поиск.
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества сообщений из списка найденных.
+	 * @param $count mixed количество сообщений, которое необходимо получить (но не более 100).
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_search
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.search
+	 */
+	public function messages_search($q, $offset = null, $count = null){
+		$params = array();
+		$params['q'] = $q;
 		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
 		return VKDoc_ReturnValue::factory('messages_search',$this->Call('messages.search',$params));
 
 	}
 	/**
-	 * sends a message.
-	 * @param $uid mixed user ID (the current user by default).
-	 * @param $message mixed message text.
-	 * @param $type mixed '0' - ordinary message, '1' - message from chat. ('0' by default).
-	 * @param $title mixed message title.
+	 * посылает сообщение.
+	 * @param $uid mixed ID пользователя (по умолчанию - текущий пользователь).
+	 * @param $chat_id mixed ID беседы, к которой будет относиться сообщение
+	 * @param $message mixed текст личного cообщения (является обязательным, если не задан параметр attachment)
+	 * @param $attachment mixed медиа-приложения к личному сообщению, перечисленные через запятую. Каждое прикрепление представлено в формате:_ - тип медиа-приложения:photo - фотографияvideo - видеозаписьaudio - аудиозаписьdoc - документwall - запись на стене - идентификатор владельца медиа-приложения - идентификатор медиа-приложения.Например:photo100172_166443618Параметр является обязательным, если не задан параметр message.
+	 * @param $forward_messages mixed идентификаторы пересылаемых сообщений, перечисленные через запятую. Перечисленные сообщения отправителя будут отображаться в теле письма у получателя.Например:123,431,544
+	 * @param $title mixed заголовок сообщения.
+	 * @param $type mixed 0  - обычное сообщение, 1 - сообщение из чата. (по умолчанию 0)
+	 * @param $lat mixed latitude, широта при добавлении метоположения.
+	 * @param $long mixed longitude, долгота при добавлении метоположения.
+	 * @param $guid mixed уникальный строковой идентификатор, предназначенный для предотвращения повторной отправки одинакового сообщения.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_send
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.send
 	 */
-	public function messages_send($uid, $message, $type = null, $title = null){
+	public function messages_send($uid, $chat_id, $message = null, $attachment = null, $forward_messages = null, $title = null, $type = null, $lat = null, $long = null, $guid = null){
 		$params = array();
 		$params['uid'] = $uid;
-		$params['message'] = $message;
-		if($type !== null){ $params['type'] = $type;}
+		$params['chat_id'] = $chat_id;
+		if($message !== null){ $params['message'] = $message;}
+		if($attachment !== null){ $params['attachment'] = $attachment;}
+		if($forward_messages !== null){ $params['forward_messages'] = $forward_messages;}
 		if($title !== null){ $params['title'] = $title;}
+		if($type !== null){ $params['type'] = $type;}
+		if($lat !== null){ $params['lat'] = $lat;}
+		if($long !== null){ $params['long'] = $long;}
+		if($guid !== null){ $params['guid'] = $guid;}
 		return VKDoc_ReturnValue::factory('messages_send',$this->Call('messages.send',$params));
 
 	}
 	/**
-	 * deletes a message.
-	 * @param $mid mixed message identifier.
+	 * удаляет сообщение.
+	 * @param $mids mixed Список идентификаторов сообщений, разделённых через запятую.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_delete
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.delete
 	 */
-	public function messages_delete($mid = null){
+	public function messages_delete($mids = null){
 		$params = array();
-		if($mid !== null){ $params['mid'] = $mid;}
+		if($mids !== null){ $params['mids'] = $mids;}
 		return VKDoc_ReturnValue::factory('messages_delete',$this->Call('messages.delete',$params));
 
 	}
 	/**
-	 * deletes all messages in a conversation.
-	 * @param $uid mixed ID of the user.
-	 * @param $chatid mixed ID of the conversation to which the message is attached to.
-	 * @param $limit mixed How many messages should be deleted. Please note that there is a limitation on this method, you cannot delete more than 10000 messages in one call, that is why if there are more messages in the conversation, the method should be called several times.
-	 * @param $offset mixed Starting with which message should the conversation be deleted. (By default, all messages starting with the first one are deleted).
+	 * Удаляет все сообщения в диалоге,
+	 * @param $uid mixed ID пользователя.
+	 * @param $chat_id mixed ID беседы, к которой будет относиться сообщение
+	 * @param $offset mixed начиная с какого сообщения нужно удалить переписку. (По умолчанию удаляются все сообщения начиная с первого).
+	 * @param $limit mixed Как много сообщений нужно удалить. Обратите внимание что на метод наложено ограничение, за один вызов нельзя удалить больше 10000 сообщений, поэтому если сообщений в переписке больше - метод нужно вызывать несколько раз.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_deleteDialog
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.deleteDialog
 	 */
-	public function messages_deleteDialog($uid, $chatid, $limit = null, $offset = null){
+	public function messages_deleteDialog($uid, $chat_id, $offset = null, $limit = null){
 		$params = array();
 		$params['uid'] = $uid;
-		$params['chatid'] = $chatid;
-		if($limit !== null){ $params['limit'] = $limit;}
+		$params['chat_id'] = $chat_id;
 		if($offset !== null){ $params['offset'] = $offset;}
+		if($limit !== null){ $params['limit'] = $limit;}
 		return VKDoc_ReturnValue::factory('messages_deleteDialog',$this->Call('messages.deleteDialog',$params));
 
 	}
 	/**
-	 * restores a deleted message.
-	 * @param $mid mixed message identifier.
+	 * восстанавливает только что удаленное сообщение.
+	 * @param $mid mixed идентификатор сообщения.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_restore
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.restore
 	 */
 	public function messages_restore($mid = null){
 		$params = array();
@@ -2423,9 +2552,10 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * marks messages as unread.
-	 * @param $mids mixed list of message identifiers, separated by a comma.
+	 * помечает сообщения как непрочитанные.
+	 * @param $mids mixed список идентификаторов сообщений, разделенных запятой.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_markAsNew
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.markAsNew
 	 */
 	public function messages_markAsNew($mids){
 		$params = array();
@@ -2434,9 +2564,10 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * marks messages as read.
-	 * @param $mids mixed list of message identifiers , separated by a comma.
+	 * помечает сообщения как прочитанные.
+	 * @param $mids mixed список идентификаторов сообщений, разделенных запятой.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_markAsRead
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.markAsRead
 	 */
 	public function messages_markAsRead($mids){
 		$params = array();
@@ -2444,10 +2575,120 @@ abstract class VKDoc_Api_Full {
 		return VKDoc_ReturnValue::factory('messages_markAsRead',$this->Call('messages.markAsRead',$params));
 
 	}
-	public function messages_getHistory(array $p){ return new VKDoc_ReturnValue($this->Call('messages.getHistory',$p));} // ERROR: Getting advanced info failed. Check logs
 	/**
-	 * returns information required for [[Connecting to the LongPoll Server|connecting to the LongPoll server]]
+	 * изменяет статус набора текста пользователем в диалоге.
+	 * @param $uid mixed ID пользователя (по умолчанию - текущий пользователь).
+	 * @param $chat_id mixed ID беседы, к которой будет относиться сообщение
+	 * @param $type mixed typing  - пользователь начал набирать текст
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_setActivity
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.setActivity
+	 */
+	public function messages_setActivity($uid, $chat_id, $type){
+		$params = array();
+		$params['uid'] = $uid;
+		$params['chat_id'] = $chat_id;
+		$params['type'] = $type;
+		return VKDoc_ReturnValue::factory('messages_setActivity',$this->Call('messages.setActivity',$params));
+
+	}
+	/**
+	 * возвращает текущий статус и время последней активности пользователя.
+	 * @param $uid mixed ID пользователя, для которого нужно получить время активности.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_getLastActivity
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.getLastActivity
+	 */
+	public function messages_getLastActivity($uid){
+		$params = array();
+		$params['uid'] = $uid;
+		return VKDoc_ReturnValue::factory('messages_getLastActivity',$this->Call('messages.getLastActivity',$params));
+
+	}
+	/**
+	 * получить информацию о беседе.
+	 * @param $chat_id mixed идентификатор чата
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_getChat
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.getChat
+	 */
+	public function messages_getChat($chat_id){
+		$params = array();
+		$params['chat_id'] = $chat_id;
+		return VKDoc_ReturnValue::factory('messages_getChat',$this->Call('messages.getChat',$params));
+
+	}
+	/**
+	 * создаёт беседу с несколькими участниками.
+	 * @param $uids mixed список идентификаторов друзей текущего пользователя с которыми необходимо создать беседу.
+	 * @param $title mixed название мультидиалога.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_createChat
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.createChat
+	 */
+	public function messages_createChat($uids, $title = null){
+		$params = array();
+		$params['uids'] = $uids;
+		if($title !== null){ $params['title'] = $title;}
+		return VKDoc_ReturnValue::factory('messages_createChat',$this->Call('messages.createChat',$params));
+
+	}
+	/**
+	 * изменяет название беседы.
+	 * @param $chat_id mixed идентификатор чата
+	 * @param $title mixed название беседы.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_editChat
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.editChat
+	 */
+	public function messages_editChat($chat_id, $title){
+		$params = array();
+		$params['chat_id'] = $chat_id;
+		$params['title'] = $title;
+		return VKDoc_ReturnValue::factory('messages_editChat',$this->Call('messages.editChat',$params));
+
+	}
+	/**
+	 * получает список участников беседы.
+	 * @param $chat_id mixed ID беседы, пользователей которой необходимо получить
+	 * @param $fields mixed Перечисленные через запятую поля объектов пользователей, которые необходимо вернуть. Поле 'invited_by' (id пригласившего пользователя) передаётся всегда, если даннный параметр задан. Если параметр 'fields' не задан метод вернёт список, содержащий  только id участников.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_getChatUsers
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.getChatUsers
+	 */
+	public function messages_getChatUsers($chat_id, $fields = null){
+		$params = array();
+		$params['chat_id'] = $chat_id;
+		if($fields !== null){ $params['fields'] = $fields;}
+		return VKDoc_ReturnValue::factory('messages_getChatUsers',$this->Call('messages.getChatUsers',$params));
+
+	}
+	/**
+	 * добавляет в беседу нового участника.
+	 * @param $chat_id mixed ID беседы, в которую необходимо добавить пользователя
+	 * @param $uid mixed ID пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_addChatUser
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.addChatUser
+	 */
+	public function messages_addChatUser($chat_id, $uid){
+		$params = array();
+		$params['chat_id'] = $chat_id;
+		$params['uid'] = $uid;
+		return VKDoc_ReturnValue::factory('messages_addChatUser',$this->Call('messages.addChatUser',$params));
+
+	}
+	/**
+	 * исключает участника из беседы.
+	 * @param $chat_id mixed ID беседы, из которой необходимо удалить пользователя.
+	 * @param $uid mixed ID пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_removeChatUser
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.removeChatUser
+	 */
+	public function messages_removeChatUser($chat_id, $uid){
+		$params = array();
+		$params['chat_id'] = $chat_id;
+		$params['uid'] = $uid;
+		return VKDoc_ReturnValue::factory('messages_removeChatUser',$this->Call('messages.removeChatUser',$params));
+
+	}
+	/**
+	 * возвращает данные, необходимые для [[Подключение_к_LongPoll_серверу|подключения к LongPoll серверу]]
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_getLongPollServer
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.getLongPollServer
 	 */
 	public function messages_getLongPollServer(){
 		$params = array();
@@ -2455,297 +2696,334 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * adds a wall post.
-	 * @param $fromgroup mixed This parameter is not taken into account if owner_id < 0 (the status is posted on the group's wall).  1 - the status will be posted on behalf of the group, 0 - the status will be posted on behalf of the user '(by default)'.
-	 * @param $friendsonly mixed 1 - the status will be available only to friends, 0 - to all users. Posted statuses are available to all users by default.
-	 * @param $services mixed List of services or sites to which the status should be exported if the user has activated this particular option. For example: twitter, facebook.
-	 * @param $attachments mixed list of objects attached to a post, separated by '","'. The field "attachments" is represented in the following format:'_''' - attachment media type:'photo' - photo'video' - video'audio' - audio filedoc - document'' - identifier of the owner of the media attachment '' - media attachment identifier.For example:photo100172_166443618,photo66748_265827614
-	 * @param $message mixed message text (required if the 'attachment' parameter is not set).
-	 * @param $ownerid mixed user identifier (the current user by default) to whom the post should be sent to. If the parameter is not set, then it is assumed that it equals the identifier of the current user.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_post
+	 * возвращает последовательность обновлений в личных сообщениях пользователя начиная с указанного времени.
+	 * @param $ts mixed Последнее значение параметра ts, полученное от Long Poll сервера или с помощью метода [[messages.getLongPollServer]]
+	 * @param $max_msg_id mixed Максимальный идентификатор сообщения среди уже имеющихся в локальной копии. Необходимо учитывать как сообщения, полученные через методы API (например [[messages.getDialogs]], [[messages.getHistory]]), так и данные, полученные из [[Подключение_к_LongPoll_серверу
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_messages_getLongPollHistory
+	 * @link http://vk.com/developers.php?oid=-1&p=messages.getLongPollHistory
 	 */
-	public function wall_post($fromgroup = null, $friendsonly = null, $services = null, $attachments = null, $message = null, $ownerid = null){
+	public function messages_getLongPollHistory($ts, $max_msg_id = null){
 		$params = array();
-		if($fromgroup !== null){ $params['fromgroup'] = $fromgroup;}
-		if($friendsonly !== null){ $params['friendsonly'] = $friendsonly;}
-		if($services !== null){ $params['services'] = $services;}
-		if($attachments !== null){ $params['attachments'] = $attachments;}
-		if($message !== null){ $params['message'] = $message;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		return VKDoc_ReturnValue::factory('wall_post',$this->Call('wall.post',$params));
+		$params['ts'] = $ts;
+		if($max_msg_id !== null){ $params['max_msg_id'] = $max_msg_id;}
+		return VKDoc_ReturnValue::factory('messages_getLongPollHistory',$this->Call('messages.getLongPollHistory',$params));
 
 	}
 	/**
-	 * deletes a wall post.
-	 * @param $postid mixed wall post identifier.
-	 * @param $ownerid mixed user identifier on whose wall a post needs to be deleted. If this parameter is not set, then it is assumed to be equal to the identifier of the current user.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_delete
+	 * редактирует запись на стене.
+	 * @param $post_id mixed идентификатор записи на стене пользователя.
+	 * @param $owner_id mixed идентификатор пользователя, на чьей стене находится запись, которую необходимо отредактировать. Если параметр не задан, то он считается равным идентификатору текущего пользователя.
+	 * @param $message mixed текст сообщения (является обязательным, если не задан параметр 'attachments')
+	 * @param $attachments mixed список объектов, приложенных к записи и разделённых символом '","'. Поле attachments представляется в формате:_,_ - тип медиа-приложения:photo - фотографияvideo - видеозаписьaudio - аудиозаписьdoc - документgraffiti - граффитиpage - wiki-страницаnote - заметкаpoll - опрос - идентификатор владельца медиа-приложения - идентификатор медиа-приложения.Например:photo100172_166443618,photo66748_265827614
+	 * @param $lat mixed географическая широта отметки, заданная в градусах (от -90 до 90).
+	 * @param $long mixed географическая долгота отметки, заданная в градусах (от -180 до 180).
+	 * @param $place_id mixed идентификатор места, в котором отмечен пользователь
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_edit
+	 * @link http://vk.com/developers.php?oid=-1&p=wall.edit
 	 */
-	public function wall_delete($postid, $ownerid = null){
+	public function wall_edit($post_id, $owner_id = null, $message = null, $attachments = null, $lat = null, $long = null, $place_id = null){
 		$params = array();
-		$params['postid'] = $postid;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		$params['post_id'] = $post_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($message !== null){ $params['message'] = $message;}
+		if($attachments !== null){ $params['attachments'] = $attachments;}
+		if($lat !== null){ $params['lat'] = $lat;}
+		if($long !== null){ $params['long'] = $long;}
+		if($place_id !== null){ $params['place_id'] = $place_id;}
+		return VKDoc_ReturnValue::factory('wall_edit',$this->Call('wall.edit',$params));
+
+	}
+	/**
+	 * удаляет запись со стены.
+	 * @param $post_id mixed идентификатор записи на стене пользователя.
+	 * @param $owner_id mixed идентификатор пользователя, на чьей стене необходимо удалить запись. Если параметр не задан, то он считается равным идентификатору текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_delete
+	 * @link http://vk.com/developers.php?oid=-1&p=wall.delete
+	 */
+	public function wall_delete($post_id, $owner_id = null){
+		$params = array();
+		$params['post_id'] = $post_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('wall_delete',$this->Call('wall.delete',$params));
 
 	}
 	/**
-	 * restores a deleted wall post.
-	 * @param $postid mixed wall post identifier.
-	 * @param $ownerid mixed user identifier on whose wall a post needs to be restored. If this parameter is not set, then it is assumed to be equal to the identifier of the current user.
+	 * восстанавливает удаленную со стены запись.
+	 * @param $post_id mixed идентификатор записи на стене пользователя.
+	 * @param $owner_id mixed идентификатор пользователя, на чьей стене необходимо восстановить запись. Если параметр не задан, то он считается равным идентификатору текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_restore
+	 * @link http://vk.com/developers.php?oid=-1&p=wall.restore
 	 */
-	public function wall_restore($postid, $ownerid = null){
+	public function wall_restore($post_id, $owner_id = null){
 		$params = array();
-		$params['postid'] = $postid;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		$params['post_id'] = $post_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('wall_restore',$this->Call('wall.restore',$params));
 
 	}
 	/**
-	 * obtains comments to a post on a user's wall.
-	 * @param $postid mixed post identifier on the user's wall.
-	 * @param $count mixed number of comments necessary to obtain (but no more 100).
-	 * @param $offset mixed offset required for selecting a certain subcollection of comments.
-	 * @param $sort mixed comment sorting order:'asc' - chronological'desc' - anti-chronological
-	 * @param $ownerid mixed user identifier on whose wall the comment to the post is located. If this parameter is not set, then it is assumed to be equal to the identifier of the current user.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_getComments
-	 */
-	public function wall_getComments($postid, $count = null, $offset = null, $sort = null, $ownerid = null){
-		$params = array();
-		$params['postid'] = $postid;
-		if($count !== null){ $params['count'] = $count;}
-		if($offset !== null){ $params['offset'] = $offset;}
-		if($sort !== null){ $params['sort'] = $sort;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
-		return VKDoc_ReturnValue::factory('wall_getComments',$this->Call('wall.getComments',$params));
-
-	}
-	/**
-	 * adds a comment to a post on a user's wall.
-	 * @param $text mixed comment text to the post on a user's wall.
-	 * @param $postid mixed identifier of the post on the user's wall.
-	 * @param $replytocid mixed identifier of the comment to which the comment to be added is a response to.
-	 * @param $ownerid mixed user identifier on whose wall the comment to the post is located. If this parameter is not set, then it is assumed to be equal to the identifier of the current user.
+	 * добавляет комментарий к записи на стене пользователя.
+	 * @param $post_id mixed идентификатор записи на стене пользователя.
+	 * @param $text mixed текст комментария к записи на стене пользователя.
+	 * @param $owner_id mixed идентификатор пользователя, на чьей стене находится запись к которой необходимо добавить комментарий. Если параметр не задан, то он считается равным идентификатору текущего пользователя.
+	 * @param $reply_to_cid mixed идентификатор комментария, ответом на который является добавляемый комментарий.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_addComment
+	 * @link http://vk.com/developers.php?oid=-1&p=wall.addComment
 	 */
-	public function wall_addComment($text, $postid, $replytocid = null, $ownerid = null){
+	public function wall_addComment($post_id, $text, $owner_id = null, $reply_to_cid = null){
 		$params = array();
+		$params['post_id'] = $post_id;
 		$params['text'] = $text;
-		$params['postid'] = $postid;
-		if($replytocid !== null){ $params['replytocid'] = $replytocid;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($reply_to_cid !== null){ $params['reply_to_cid'] = $reply_to_cid;}
 		return VKDoc_ReturnValue::factory('wall_addComment',$this->Call('wall.addComment',$params));
 
 	}
 	/**
-	 * deletes a comment to a post on a user's wall.
-	 * @param $cid mixed identifier of the comment on the user's wall.
-	 * @param $ownerid mixed user identifier on whose wall the comment to the post is located. If this parameter is not set, then it is assumed to be equal to the identifier of the current user.
+	 * удаляет комментарий к записи на стене полльзователя.
+	 * @param $cid mixed идентификатор комментария на стене пользователя.
+	 * @param $owner_id mixed идентификатор пользователя, на чьей стене находится комментарий к записи. Если параметр не задан, то он считается равным идентификатору текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_deleteComment
+	 * @link http://vk.com/developers.php?oid=-1&p=wall.deleteComment
 	 */
-	public function wall_deleteComment($cid, $ownerid = null){
+	public function wall_deleteComment($cid, $owner_id = null){
 		$params = array();
 		$params['cid'] = $cid;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('wall_deleteComment',$this->Call('wall.deleteComment',$params));
 
 	}
 	/**
-	 * restores a comment to a post on a user's wall.
-	 * @param $cid mixed identifier of the comment on the user's wall.
-	 * @param $ownerid mixed user identifier on whose wall the comment to the post is located. If this parameter is not set, then it is assumed to be equal to the identifier of the current user.
+	 * восстанавливает комментарий к записи на стене пользователя.
+	 * @param $cid mixed идентификатор комментария на стене пользователя.
+	 * @param $owner_id mixed идентификатор пользователя, на чьей стене находится комментарий к записи. Если параметр не задан, то он считается равным идентификатору текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_restoreComment
+	 * @link http://vk.com/developers.php?oid=-1&p=wall.restoreComment
 	 */
-	public function wall_restoreComment($cid, $ownerid = null){
+	public function wall_restoreComment($cid, $owner_id = null){
 		$params = array();
 		$params['cid'] = $cid;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('wall_restoreComment',$this->Call('wall.restoreComment',$params));
 
 	}
 	/**
-	 * deletes a post on a user's wall from the '''Like''' list.
-	 * @param $postid mixed identifier of the post on the wall of a user that needs to be deleted from the 'Like' list.
-	 * @param $ownerid mixed user identifier on whose wall the post that needs to be deleted from the 'Like' list is located. If this parameter is not set, then it is assumed to be equal to the identifier of the current user.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_deleteLike
+	 * добавляет запись на стене пользователя в список '''Мне нравится'''.
+	 * @param $post_id mixed идентификатор сообщения на стене пользователя, которое необходимо добавить в список 'Мне нравится'.
+	 * @param $owner_id mixed идентификатор пользователя, на чьей стене находится запись, которую необходимо добавить в список 'Мне нравится'. Если параметр не задан, то он считается равным идентификатору текущего пользователя.
+	 * @param $repost mixed определяет, необходимо ли опубликовать запись, которая заносится в список 'Мне нравится', на стене текущего пользователя. Публикация возможна только для записей, находящихся на чужих стенах.
+	 * @param $message mixed комментарий к записи, публикуемой на своей странице (при использовании параметра 'repost'). По умолчанию комментарий к записи не добавляется.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_addLike
+	 * @link http://vk.com/developers.php?oid=-1&p=wall.addLike
 	 */
-	public function wall_deleteLike($postid, $ownerid = null){
+	public function wall_addLike($post_id, $owner_id = null, $repost = null, $message = null){
 		$params = array();
-		$params['postid'] = $postid;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		$params['post_id'] = $post_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($repost !== null){ $params['repost'] = $repost;}
+		if($message !== null){ $params['message'] = $message;}
+		return VKDoc_ReturnValue::factory('wall_addLike',$this->Call('wall.addLike',$params));
+
+	}
+	/**
+	 * удаляет запись на стене пользователя из списка '''Мне нравится'''.
+	 * @param $post_id mixed идентификатор сообщения на стене пользователя, которое необходимо удалить из списка 'Мне нравится'.
+	 * @param $owner_id mixed идентификатор пользователя, на чьей стене находится запись, которую необходимо удалить из списка 'Мне нравится'. Если параметр не задан, то он считается равным идентификатору текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_wall_deleteLike
+	 * @link http://vk.com/developers.php?oid=-1&p=wall.deleteLike
+	 */
+	public function wall_deleteLike($post_id, $owner_id = null){
+		$params = array();
+		$params['post_id'] = $post_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('wall_deleteLike',$this->Call('wall.deleteLike',$params));
 
 	}
 	/**
-	 * returns a list of comments to a photo.
-	 * @param $pid mixed photo identifier.
-	 * @param $count mixed number of comments needed to obtain (no more than 100).
-	 * @param $ownerid mixed user identifier (the current user by default).
-	 * @param $offset mixed offset, required for selecting a certain subcollection of comments.
+	 * возвращает список комментариев к фотографии.
+	 * @param $pid mixed идентификатор фотографии.
+	 * @param $owner_id mixed идентификатор пользователя (по умолчанию - текущий пользователь). Если передано отрицательное значение, будут возвращены комментарии к фотографии группы с идентификатором'-owner_id'.
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества комментариев.
+	 * @param $count mixed количество комментариев, которое необходимо получить (но не более 100).
+	 * @param $sort mixed порядок сортировки комментариев (asc - от старых к новым, desc - от новых к старым)
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getComments
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.getComments
 	 */
-	public function photos_getComments($pid, $count = null, $ownerid = null, $offset = null){
+	public function photos_getComments($pid, $owner_id = null, $offset = null, $count = null, $sort = null){
 		$params = array();
 		$params['pid'] = $pid;
-		if($count !== null){ $params['count'] = $count;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		if($sort !== null){ $params['sort'] = $sort;}
 		return VKDoc_ReturnValue::factory('photos_getComments',$this->Call('photos.getComments',$params));
 
 	}
 	/**
-	 * returns a list of comments to an album or to all albums.
-	 * @param $count mixed number of comments needed to obtain. If this parameter is not set, then it is assumed it is equal to 20. The maximum parameter value is 100.
-	 * @param $offset mixed offset, required for selecting a certain subcollection of comments. If this parameter is not set, then it is assumed it is equal to 0.
-	 * @param $aid mixed album identifier. If this parameter is not set, then it is assumed that comments al all of the user's album's need to be received.
-	 * @param $ownerid mixed user identifier. If this parameter is not set, then it is assumed that it equals to the identifier of the current user.
+	 * возвращает список комментариев к альбому или ко всем альбомам.
+	 * @param $owner_id mixed идентификатор пользователя. Если параметр не задан, то считается, что он равен идентификатору текущего пользователя.
+	 * @param $aid mixed идентификатор альбома. Если параметр не задан, то считается, что необходимо получить комментарии ко всем альбомам пользователя.
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества комментариев. Если параметр не задан, то считается, что он равен 0.
+	 * @param $count mixed количество комментариев, которое необходимо получить. Если параметр не задан, то считается что он равен 20. Максимальное значение параметра 100.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getAllComments
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.getAllComments
 	 */
-	public function photos_getAllComments($count = null, $offset = null, $aid = null, $ownerid = null){
+	public function photos_getAllComments($owner_id = null, $aid = null, $offset = null, $count = null){
 		$params = array();
-		if($count !== null){ $params['count'] = $count;}
-		if($offset !== null){ $params['offset'] = $offset;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		if($aid !== null){ $params['aid'] = $aid;}
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
 		return VKDoc_ReturnValue::factory('photos_getAllComments',$this->Call('photos.getAllComments',$params));
 
 	}
 	/**
-	 * creates a new comment to a photo.
-	 * @param $pid mixed photo identifier.
-	 * @param $message mixed comment text (minimum length - 2 characters).
-	 * @param $ownerid mixed user identifier (the current user by default).
+	 * создает новый комментарий к фотографии.
+	 * @param $pid mixed идентификатор фотографии.
+	 * @param $message mixed текст комментария (минимальная длина - 2 символа).
+	 * @param $owner_id mixed идентификатор пользователя (по умолчанию - текущий пользователь). Если передано отрицательное значение, будет создан комментарий к фотографии группы с идентификатором'-owner_id'.
+	 * @param $reply_to_cid mixed идентификатор комментария, ответом на который является добавляемый комментарий.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_createComment
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.createComment
 	 */
-	public function photos_createComment($pid, $message, $ownerid = null){
+	public function photos_createComment($pid, $message, $owner_id = null, $reply_to_cid = null){
 		$params = array();
 		$params['pid'] = $pid;
 		$params['message'] = $message;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		if($reply_to_cid !== null){ $params['reply_to_cid'] = $reply_to_cid;}
 		return VKDoc_ReturnValue::factory('photos_createComment',$this->Call('photos.createComment',$params));
 
 	}
 	/**
-	 * edits the text of a comment to a photo.
-	 * @param $id mixed comment identifier.
-	 * @param $pid mixed photo identifier.
-	 * @param $message mixed comment text (minimum length - 2 characters)
-	 * @param $ownerid mixed user identifier (the current user by default).
+	 * изменяет текст комментария к фотографии.
+	 * @param $pid mixed идентификатор фотографии.
+	 * @param $cid mixed идентификатор комментария.
+	 * @param $message mixed текст комментария (минимальная длина - 2 символа).
+	 * @param $owner_id mixed идентификатор пользователя (по умолчанию - текущий пользователь).
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_editComment
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.editComment
 	 */
-	public function photos_editComment($id, $pid, $message, $ownerid = null){
+	public function photos_editComment($pid, $cid, $message, $owner_id = null){
 		$params = array();
-		$params['id'] = $id;
 		$params['pid'] = $pid;
+		$params['cid'] = $cid;
 		$params['message'] = $message;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('photos_editComment',$this->Call('photos.editComment',$params));
 
 	}
 	/**
-	 * deletes a comment to a photo.
-	 * @param $pid mixed photo identifier.
-	 * @param $cid mixed comment identifier.
-	 * @param $ownerid mixed user identifier (the current user by default).
+	 * удаляет комментарий к фотографии.
+	 * @param $pid mixed идентификатор фотографии.
+	 * @param $cid mixed идентификатор комментария.
+	 * @param $owner_id mixed идентификатор пользователя (по умолчанию - текущий пользователь). Если передано отрицательное значение, будет удален комментарий к фотографии группы с идентификатором'-owner_id'.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_deleteComment
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.deleteComment
 	 */
-	public function photos_deleteComment($pid, $cid, $ownerid = null){
+	public function photos_deleteComment($pid, $cid, $owner_id = null){
 		$params = array();
 		$params['pid'] = $pid;
 		$params['cid'] = $cid;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('photos_deleteComment',$this->Call('photos.deleteComment',$params));
 
 	}
 	/**
-	 * restores a deleted comment to a photo.
-	 * @param $pid mixed photo identifier.
-	 * @param $cid mixed comment identifier.
-	 * @param $ownerid mixed user identifier (the current user by default).
+	 * восстанавливает комментарий к фотографии.
+	 * @param $pid mixed идентификатор фотографии.
+	 * @param $cid mixed идентификатор комментария.
+	 * @param $owner_id mixed идентификатор пользователя (по умолчанию - текущий пользователь).
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_restoreComment
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.restoreComment
 	 */
-	public function photos_restoreComment($pid, $cid, $ownerid = null){
+	public function photos_restoreComment($pid, $cid, $owner_id = null){
 		$params = array();
 		$params['pid'] = $pid;
 		$params['cid'] = $cid;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('photos_restoreComment',$this->Call('photos.restoreComment',$params));
 
 	}
 	/**
-	 * returns a list of photos on which a user is tagged.
-	 * @param $sort mixed '1' - an additional field 'likes' will be returned. By default the field 'likes' is not returned.
-	 * @param $sort mixed results sorting (0 - by tag day in decreasing order, 1 -by date in increasing order).
-	 * @param $count mixed the number of photos needed to obtain (no more than 100).
-	 * @param $offset mixed offset, required for selecting a certain subcollection of photos.
-	 * @param $uid mixed user identifier (the current user by default).
+	 * возвращает список фотографий, на которых отмечен пользователь.
+	 * @param $uid mixed идентификатор пользователя (по умолчанию - текущий пользователь).
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества фотографий.
+	 * @param $count mixed количество фотографий, которое необходимо получить (но не более 100).
+	 * @param $sort mixed сортировка результатов (0 - по дате добавления отметки в порядке убывания, 1 - по дате добавления отметки в порядке возрастания).
+	 * @param $extended mixed '1' - будет возвращено дополнительное поле 'likes'. По умолчанию поле 'likes' не возвращается.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getUserPhotos
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.getUserPhotos
 	 */
-	public function photos_getUserPhotos($sort = null, $sort = null, $count = null, $offset = null, $uid = null){
+	public function photos_getUserPhotos($uid = null, $offset = null, $count = null, $sort = null, $extended = null){
 		$params = array();
-		if($sort !== null){ $params['sort'] = $sort;}
-		if($sort !== null){ $params['sort'] = $sort;}
-		if($count !== null){ $params['count'] = $count;}
-		if($offset !== null){ $params['offset'] = $offset;}
 		if($uid !== null){ $params['uid'] = $uid;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		if($sort !== null){ $params['sort'] = $sort;}
+		if($extended !== null){ $params['extended'] = $extended;}
 		return VKDoc_ReturnValue::factory('photos_getUserPhotos',$this->Call('photos.getUserPhotos',$params));
 
 	}
 	/**
-	 * returns the list of tags in a photo.
-	 * @param $pid mixed photo identifier.
-	 * @param $ownerid mixed user identifier (the current user by default).
+	 * возвращает список отметок на фотографии.
+	 * @param $pid mixed идентификатор фотографии.
+	 * @param $owner_id mixed идентификатор пользователя (по умолчанию - текущий пользователь).
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getTags
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.getTags
 	 */
-	public function photos_getTags($pid, $ownerid = null){
+	public function photos_getTags($pid, $owner_id = null){
 		$params = array();
 		$params['pid'] = $pid;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('photos_getTags',$this->Call('photos.getTags',$params));
 
 	}
 	/**
-	 * adds a tag to a photo.
-	 * @param $x2 mixed coordinate of the bottom right corner of the tag.
-	 * @param $y2 mixed coordinate of the bottom right corner of the tag.
-	 * @param $y mixed coordinate of the top left corner of the tag.
-	 * @param $x mixed coordinate of the top left corner of the tag.
-	 * @param $pid mixed photo identifier.
-	 * @param $uid mixed identifier of the user who needs to be tagged in the photo.
-	 * @param $ownerid mixed identifier of the owner of the photo (the current user by default).
+	 * добавляет отметку на фотографию.
+	 * @param $pid mixed идентификатор фотографии.
+	 * @param $uid mixed идентификатор пользователя, которого нужно отметить на фотографии.
+	 * @param $x mixed координата верхнего-левого угла отметки в % от ширины фотографии.
+	 * @param $y mixed координата верхнего-левого угла отметки в % от высоты фотографии.
+	 * @param $x2 mixed координата правого-нижнего угла отметки в % от ширины фотографии.
+	 * @param $y2 mixed координата правого-нижнего угла отметки  в % от высоты фотографии.
+	 * @param $owner_id mixed идентификатор владельца фотографии (по умолчанию - текущий пользователь).
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_putTag
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.putTag
 	 */
-	public function photos_putTag($x2, $y2, $y, $x, $pid, $uid, $ownerid = null){
+	public function photos_putTag($pid, $uid, $x, $y, $x2, $y2, $owner_id = null){
 		$params = array();
-		$params['x2'] = $x2;
-		$params['y2'] = $y2;
-		$params['y'] = $y;
-		$params['x'] = $x;
 		$params['pid'] = $pid;
 		$params['uid'] = $uid;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		$params['x'] = $x;
+		$params['y'] = $y;
+		$params['x2'] = $x2;
+		$params['y2'] = $y2;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('photos_putTag',$this->Call('photos.putTag',$params));
 
 	}
 	/**
-	 * deletes a tag from a photo.
-	 * @param $tagid mixed identifier of that tag that needs to be deleted.
-	 * @param $pid mixed photo identifier.
-	 * @param $ownerid mixed identifier of the owner of the photo (the current user by default).
+	 * удаляет отметку с фотографии.
+	 * @param $pid mixed идентификатор фотографии.
+	 * @param $tag_id mixed идентификатор отметки, которую нужно удалить.
+	 * @param $owner_id mixed идентификатор владельца фотографии (по умолчанию - текущий пользователь).
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_removeTag
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.removeTag
 	 */
-	public function photos_removeTag($tagid, $pid, $ownerid = null){
+	public function photos_removeTag($pid, $tag_id, $owner_id = null){
 		$params = array();
-		$params['tagid'] = $tagid;
 		$params['pid'] = $pid;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		$params['tag_id'] = $tag_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('photos_removeTag',$this->Call('photos.removeTag',$params));
 
 	}
 	/**
-	 * deletes a user's photo album.
-	 * @param $aid mixed identifier of the album to be deleted.
+	 * удаляет фотоальбом пользователя.
+	 * @param $aid mixed идентификатор удаляемого альбома.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_deleteAlbum
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.deleteAlbum
 	 */
 	public function photos_deleteAlbum($aid){
 		$params = array();
@@ -2754,8 +3032,9 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns the server address for uploading photos as an attachment to a private message.
+	 * возвращает адрес сервера для загрузки фотографии в качестве прикрепления к личному сообщению.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_getMessagesUploadServer
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.getMessagesUploadServer
 	 */
 	public function photos_getMessagesUploadServer(){
 		$params = array();
@@ -2763,91 +3042,132 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * saves a photo after upload.
-	 * @param $hash mixed a parameter returned as a result of uploading a photo to the server.
-	 * @param $photo mixed a parameter returned as a result of uploading a photo to the server.
-	 * @param $server mixed a parameter returned as a result of uploading a photo to the server.
+	 * сохраняет фотографию после загрузки.
+	 * @param $server mixed параметр, возвращаемый в результате загрузки фотографий на сервер.
+	 * @param $photo mixed параметр, возвращаемый в результате загрузки фотографий на сервер.
+	 * @param $hash mixed параметр, возвращаемый в результате загрузки фотографий на сервер.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_saveMessagesPhoto
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.saveMessagesPhoto
 	 */
-	public function photos_saveMessagesPhoto($hash, $photo, $server){
+	public function photos_saveMessagesPhoto($server, $photo, $hash){
 		$params = array();
-		$params['hash'] = $hash;
-		$params['photo'] = $photo;
 		$params['server'] = $server;
+		$params['photo'] = $photo;
+		$params['hash'] = $hash;
 		return VKDoc_ReturnValue::factory('photos_saveMessagesPhoto',$this->Call('photos.saveMessagesPhoto',$params));
 
 	}
 	/**
-	 * deletes a photo.
-	 * @param $pid mixed ID of the photo to be deleted.
-	 * @param $oid mixed Identifier of the user where the post must be left. If the parameter is not set, then it is assumed that it is equal to the identifier of the current user.
+	 * удаляет фотографию.
+	 * @param $oid mixed Идентификатор пользователя, которому принадлежит фотография. Если параметр не задан, то считается, что он равен идентификатору текущего пользователя. Если передано отрицательное значение, будет удалена фотография группы с идентификатором'-owner_id'.
+	 * @param $pid mixed ID фотографии, которую необходимо удалить.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_photos_delete
+	 * @link http://vk.com/developers.php?oid=-1&p=photos.delete
 	 */
-	public function photos_delete($pid, $oid){
+	public function photos_delete($oid, $pid){
 		$params = array();
-		$params['pid'] = $pid;
 		$params['oid'] = $oid;
+		$params['pid'] = $pid;
 		return VKDoc_ReturnValue::factory('photos_delete',$this->Call('photos.delete',$params));
 
 	}
 	/**
-	 * returns the news feed for the current user.
-	 * @param $count mixed indicates the maximum number of news to return, but no more than 100.
-	 * @param $endtime mixed time, in 'unixtime' format, before which it is necessary to obtain news for the current user. If this parameter is not set, then it is assumed to be equal to the current time.
-	 * @param $starttime mixed time, in 'unixtime' format, from the start of which it is necessary to obtain news for the current user. If this parameter is not set, then it is assumed to be equal to the value of time 24 hours ago.
-	 * @param $filters mixed news items names which need to be obtained, separated by a comma. Currently, the following news items lists are supported:'post' - new wall posts'photo' - new photos'photo_tag' - new tags on photos'friend' - new friends'note' - new notesIf this parameter is not set, then all possible news will be returned.
-	 * @param $sourceids mixed news sources from which news need to be obtained, separated by a comma. Users' identifiers can be indicated in '' or 'u' formats, where '' is the identifier of the user's friend.Group identifiers can be indicated in  '-' or 'g'formats, where '' is the identifier of the group.For example, the following string'1,-1,u10,g12904887'indicates that it is necessary to obtain only the news of friends with the identifiers '1' and '10', as well as groups with the identifiers '1' and '12904887'.If this parameter is not set, then it is assumed that it includes a list of all friends and groups of the user, excluding those that can be obtained with the [[newsfeed.getBanned]] method.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_newsfeed_get
-	 */
-	public function newsfeed_get($count = null, $endtime = null, $starttime = null, $filters = null, $sourceids = null){
-		$params = array();
-		if($count !== null){ $params['count'] = $count;}
-		if($endtime !== null){ $params['endtime'] = $endtime;}
-		if($starttime !== null){ $params['starttime'] = $starttime;}
-		if($filters !== null){ $params['filters'] = $filters;}
-		if($sourceids !== null){ $params['sourceids'] = $sourceids;}
-		return VKDoc_ReturnValue::factory('newsfeed_get',$this->Call('newsfeed.get',$params));
-
-	}
-	/**
-	 * returns a list of hidden users and groups in the newsfeed.
+	 * возвращает список скрытых пользователей и групп в новостях.
+	 * @param $extended mixed если этот параметр равен 1, возвращается дополнительная информация о пользователях и группах 
+	 * @param $fields mixed  поля профилей, которые необходимо вернуть. См. [[Описание_полей_параметра_fields
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_newsfeed_getBanned
+	 * @link http://vk.com/developers.php?oid=-1&p=newsfeed.getBanned
 	 */
-	public function newsfeed_getBanned(){
+	public function newsfeed_getBanned($extended = null, $fields = null){
 		$params = array();
+		if($extended !== null){ $params['extended'] = $extended;}
+		if($fields !== null){ $params['fields'] = $fields;}
 		return VKDoc_ReturnValue::factory('newsfeed_getBanned',$this->Call('newsfeed.getBanned',$params));
 
 	}
 	/**
-	 * bans displaying news from set users and groups.
-	 * @param $gids mixed identifiers of the user's groups, news from which is necessary to hide from the news feed of the current user, separated by a comma.
-	 * @param $uids mixed identifiers of the user's friends, news from whom is necessary to hide from the news feed of the current user, separated by a comma.
+	 * запрещает показывать новости от заданных пользователей и групп.
+	 * @param $uids mixed перечисленные через запятую идентификаторы друзей пользователя, новости от которых необходимо скрыть из ленты новостей текущего пользователя.
+	 * @param $gids mixed перечисленные через запятую идентификаторы групп пользователя, новости от которых необходимо скрыть из ленты новостей текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_newsfeed_addBan
+	 * @link http://vk.com/developers.php?oid=-1&p=newsfeed.addBan
 	 */
-	public function newsfeed_addBan($gids = null, $uids = null){
+	public function newsfeed_addBan($uids = null, $gids = null){
 		$params = array();
-		if($gids !== null){ $params['gids'] = $gids;}
 		if($uids !== null){ $params['uids'] = $uids;}
+		if($gids !== null){ $params['gids'] = $gids;}
 		return VKDoc_ReturnValue::factory('newsfeed_addBan',$this->Call('newsfeed.addBan',$params));
 
 	}
 	/**
-	 * allows to display news from set users and groups.
-	 * @param $gids mixed identifiers of the user's groups, news from which it is necessary to return to the news feed of the current user, separated by a comma.
-	 * @param $uids mixed identifiers of the user's friends, news from whom it is necessary to return to the news feed of the current user, separated by a comma.
+	 * разрешает показывать новости от заданных пользователей и групп.
+	 * @param $uids mixed перечисленные через запятую идентификаторы друзей пользователя, новости от которых необходимо вернуть в ленту новостей текущего пользователя.
+	 * @param $gids mixed перечисленные через запятую идентификаторы групп пользователя, новости от которых необходимо вернуть в ленту новостей текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_newsfeed_deleteBan
+	 * @link http://vk.com/developers.php?oid=-1&p=newsfeed.deleteBan
 	 */
-	public function newsfeed_deleteBan($gids = null, $uids = null){
+	public function newsfeed_deleteBan($uids = null, $gids = null){
 		$params = array();
-		if($gids !== null){ $params['gids'] = $gids;}
 		if($uids !== null){ $params['uids'] = $uids;}
+		if($gids !== null){ $params['gids'] = $gids;}
 		return VKDoc_ReturnValue::factory('newsfeed_deleteBan',$this->Call('newsfeed.deleteBan',$params));
 
 	}
 	/**
-	 * obtains a user's status.
-	 * @param $uid mixed identifier of the user whose status needs to be obtained. If this parameter is not set, then it is assumed that it is equal to the identifier of the current user.
+	 * добавляет объект в список «Мне нравится» текущего пользователя.
+	 * @param $type mixed идентификатор типа Like-объекта. Подробнее об идентификаторах объектов можно узнать на странице [[Список типов Like-объектов]].
+	 * @param $item_id mixed идентификатор Like-объекта.
+	 * @param $owner_id mixed идентификатор владельца Like-объекта. Если параметр не задан, то считается, что он равен идентифкатору текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_likes_add
+	 * @link http://vk.com/developers.php?oid=-1&p=likes.add
+	 */
+	public function likes_add($type, $item_id, $owner_id = null){
+		$params = array();
+		$params['type'] = $type;
+		$params['item_id'] = $item_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		return VKDoc_ReturnValue::factory('likes_add',$this->Call('likes.add',$params));
+
+	}
+	/**
+	 * удаляет объект из списка «Мне нравится» текущего пользователя.
+	 * @param $type mixed идентификатор типа Like-объекта. Подробнее об идентификаторах объектов можно узнать на странице [[Список типов Like-объектов]].
+	 * @param $item_id mixed идентификатор Like-объекта.
+	 * @param $owner_id mixed идентификатор владельца Like-объекта. Если параметр не задан, то считается, что он равен идентифкатору текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_likes_delete
+	 * @link http://vk.com/developers.php?oid=-1&p=likes.delete
+	 */
+	public function likes_delete($type, $item_id, $owner_id = null){
+		$params = array();
+		$params['type'] = $type;
+		$params['item_id'] = $item_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		return VKDoc_ReturnValue::factory('likes_delete',$this->Call('likes.delete',$params));
+
+	}
+	/**
+	 * проверяет, находится ли объект в списке «Мне нравится».
+	 * @param $type mixed идентификатор типа Like-объекта. Подробнее об идентификаторах объектов можно узнать на странице [[Список типов Like-объектов]].
+	 * @param $item_id mixed идентификатор Like-объекта.
+	 * @param $user_id mixed идентификатор пользователя у которого необходимо проверить наличие объекта в списке 'Мне нравится'. Если параметр не задан, то считается, что он равен идентификатору текущего пользователя.
+	 * @param $owner_id mixed идентификатор владельца Like-объекта. Если параметр не задан, то считается, что он равен идентификатору текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_likes_isLiked
+	 * @link http://vk.com/developers.php?oid=-1&p=likes.isLiked
+	 */
+	public function likes_isLiked($type, $item_id, $user_id = null, $owner_id = null){
+		$params = array();
+		$params['type'] = $type;
+		$params['item_id'] = $item_id;
+		if($user_id !== null){ $params['user_id'] = $user_id;}
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
+		return VKDoc_ReturnValue::factory('likes_isLiked',$this->Call('likes.isLiked',$params));
+
+	}
+	/**
+	 * получает статус пользователя.
+	 * @param $uid mixed идентификатор пользователя, статус которого необходимо получить. Если параметр не задан, то считается, что он равен идентификатору текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_status_get
+	 * @link http://vk.com/developers.php?oid=-1&p=status.get
 	 */
 	public function status_get($uid = null){
 		$params = array();
@@ -2856,19 +3176,23 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * sets a status to the current user.
-	 * @param $text mixed text of the status that needs to be set to the current user. If this parameter is not set or equals to an empty string, then the status of the current user will be cleared.
+	 * устанавливает статус текущего пользователя.
+	 * @param $text mixed текст статуса, который необходимо установить текущему пользователю. Если параметр не задан или равен пустой строке, то статус текущего пользователя будет очищен.
+	 * @param $audio mixed текущая аудиозапись, которую необходимо транслировать в статус, задается в формате oid_aid (идентификатор владельца и идентификатор аудиозаписи, разделенные знаком подчеркивания). Для успешной трансляции необходимо, чтобы она была включена пользователем, в противном случае будет возвращена ошибка 221 ("User disabled track name broadcast"). При указании параметра audio параметр text игнорируется.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_status_set
+	 * @link http://vk.com/developers.php?oid=-1&p=status.set
 	 */
-	public function status_set($text = null){
+	public function status_set($text = null, $audio = null){
 		$params = array();
 		if($text !== null){ $params['text'] = $text;}
+		if($audio !== null){ $params['audio'] = $audio;}
 		return VKDoc_ReturnValue::factory('status_set',$this->Call('status.set',$params));
 
 	}
 	/**
-	 * returns information about friend lists.
+	 * возвращает информацию о списках друзей.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_friends_getLists
+	 * @link http://vk.com/developers.php?oid=-1&p=friends.getLists
 	 */
 	public function friends_getLists(){
 		$params = array();
@@ -2876,10 +3200,11 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * creates a new friend list.
-	 * @param $name mixed name of the friend list to be created.
-	 * @param $uids mixed user's friends' identifier that need to be included in the list to be created, separated by a comma. Identifiers of users who are not in the current user's friend list will be ignored.
+	 * создаёт новый список друзей.
+	 * @param $name mixed название создаваемого списка друзей.
+	 * @param $uids mixed перечисленные через запятую идентификаторы друзей пользователя, которых необходимо включить в создаваемый список. Идентификаторы пользователей, не являющихся друзьями текущего пользователя, игнорируются.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_friends_addList
+	 * @link http://vk.com/developers.php?oid=-1&p=friends.addList
 	 */
 	public function friends_addList($name, $uids = null){
 		$params = array();
@@ -2889,11 +3214,12 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * edits an already existing friend list.
-	 * @param $lid mixed identifier of an existing friend list.
-	 * @param $name mixed friend list name.
-	 * @param $uids mixed the user's friends' identifiers that need to be ticked, separated by a comma. Identifiers of users who are not in the current user's friend list will be ignored.
+	 * редактирует существующий список друзей.
+	 * @param $lid mixed идентификатор существующего списка друзей.
+	 * @param $name mixed название списка друзей.
+	 * @param $uids mixed перечисленные через запятую идентификаторы друзей пользователя, которым необходимо поставить метку. Идентификаторы пользователей, не являющихся друзьями текущего пользователя, игнорируются.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_friends_editList
+	 * @link http://vk.com/developers.php?oid=-1&p=friends.editList
 	 */
 	public function friends_editList($lid, $name, $uids = null){
 		$params = array();
@@ -2904,10 +3230,11 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * adds a user to friends or confirms a friend request.
-	 * @param $uid mixed identifier of the user who needs to send the request, or the request from whom needs to be accepted.
-	 * @param $text mixed text of the message for the friend request. Maximum length of the message - 500 characters.
+	 * добавляет пользователя в друзья или одобряет заявку на добавление.
+	 * @param $uid mixed идентификатор пользователя которому необходимо отправить заявку, либо заявку от которого необходимо одобрить.
+	 * @param $text mixed текст сопроводительного сообщения для заявки на добавление в друзья. Максимальная длина сообщения - 500 символов.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_friends_add
+	 * @link http://vk.com/developers.php?oid=-1&p=friends.add
 	 */
 	public function friends_add($uid, $text = null){
 		$params = array();
@@ -2917,9 +3244,10 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * deletes a user from friends or declines a friend request.
-	 * @param $uid mixed user identifier who needs to be deleted from the friend list, or the request from whom needs to be declined.
+	 * удаляет пользователя из друзей или отклоняет заявку на добавление.
+	 * @param $uid mixed идентификатор пользователя, которого необходимо удалить из списка друзей, либо заявку от которого необходимо отклонить.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_friends_delete
+	 * @link http://vk.com/developers.php?oid=-1&p=friends.delete
 	 */
 	public function friends_delete($uid){
 		$params = array();
@@ -2928,104 +3256,543 @@ abstract class VKDoc_Api_Full {
 
 	}
 	/**
-	 * returns a list of friend requests of the current user.
-	 * @param $needmutual mixed determines whether it is needed to return a list of mutual friends if they are present. Please note that no more than 20 requests will be returned when using need_mutual.
-	 * @param $needmessages mixed determines whether it is needed to return messages from users who have sent friend requests.
-	 * @param $count mixed maximum number of friend requests needed to obtain (no more than 100). If the parameter is not set, then it is assumed that it equals 100.
-	 * @param $offset mixed offset required for selecting a certain subcollection of friend requests.
+	 * возвращает список заявок в друзья у текущего пользователя.
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества заявок на добавление в друзья.
+	 * @param $count mixed максимальное количество заявок на добавление в друзья, которые необходимо получить (не более 1000). Если параметр не задан, то считается, что он равен 100.
+	 * @param $need_messages mixed определяет требуется ли возвращать в ответе сообщения от пользователей, подавших заявку на добавление в друзья.
+	 * @param $need_mutual mixed определяет требуется ли возвращать в ответе список общих друзей, если они есть. Обратите внимание, что при использовании need_mutual будет возвращено не более 20 заявок.
+	 * @param $out mixed '0' - возвращать полученные заявки в друзья (по умолчанию), '1' - возвращать отправленные пользователем заявки.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_friends_getRequests
+	 * @link http://vk.com/developers.php?oid=-1&p=friends.getRequests
 	 */
-	public function friends_getRequests($needmutual = null, $needmessages = null, $count = null, $offset = null){
+	public function friends_getRequests($offset = null, $count = null, $need_messages = null, $need_mutual = null, $out = null){
 		$params = array();
-		if($needmutual !== null){ $params['needmutual'] = $needmutual;}
-		if($needmessages !== null){ $params['needmessages'] = $needmessages;}
-		if($count !== null){ $params['count'] = $count;}
 		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		if($need_messages !== null){ $params['need_messages'] = $need_messages;}
+		if($need_mutual !== null){ $params['need_mutual'] = $need_mutual;}
+		if($out !== null){ $params['out'] = $out;}
 		return VKDoc_ReturnValue::factory('friends_getRequests',$this->Call('friends.getRequests',$params));
 
 	}
 	/**
-	 * returns detailed information about a poll.
-	 * @param $pollid mixed poll identifier, information about which is needed to obtain.
-	 * @param $ownerid mixed identifier of the poll owner whose information is needed to obtain. If this parameter is not set, then it is assumed it is equal to the identifier of the current user.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_polls_getById
+	 * отклоняет все заявки на добавление в друзья.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_friends_deleteAllRequests
+	 * @link http://vk.com/developers.php?oid=-1&p=friends.deleteAllRequests
 	 */
-	public function polls_getById($pollid, $ownerid = null){
+	public function friends_deleteAllRequests(){
 		$params = array();
-		$params['pollid'] = $pollid;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		return VKDoc_ReturnValue::factory('friends_deleteAllRequests',$this->Call('friends.deleteAllRequests',$params));
+
+	}
+	/**
+	 * возвращает список профилей пользователей, которые могут быть друзьями текущего пользователя.
+	 * @param $filter mixed Типы предрагаемых друзей которые нужно вернуть, перечисленные через запятую.Параметр может принимать следующие значения: 'mutual' - пользователи, с которыми много общих друзей,'contacts' -  пользователи найденные благодаря методу [[account.importContacts]].'mutual_contacts' -  пользователи, которые импортировали те же контакты что и текущий пользователь, используя метод [[account.importContacts]].По умолчанию будут возвращены все возможные друзья.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_friends_getSuggestions
+	 * @link http://vk.com/developers.php?oid=-1&p=friends.getSuggestions
+	 */
+	public function friends_getSuggestions($filter = null){
+		$params = array();
+		if($filter !== null){ $params['filter'] = $filter;}
+		return VKDoc_ReturnValue::factory('friends_getSuggestions',$this->Call('friends.getSuggestions',$params));
+
+	}
+	/**
+	 * позволяет вступить в группу или публичную страницу.
+	 * @param $gid mixed Идентификатор группы, публичной страницы или встречи.
+	 * @param $not_sure mixed Опциональный параметр учитываемый, если 'gid' принадлежит встрече. '1' - Возможно пойду. '0' - Точно пойду. По умолчанию '0'.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_groups_join
+	 * @link http://vk.com/developers.php?oid=-1&p=groups.join
+	 */
+	public function groups_join($gid, $not_sure = null){
+		$params = array();
+		$params['gid'] = $gid;
+		if($not_sure !== null){ $params['not_sure'] = $not_sure;}
+		return VKDoc_ReturnValue::factory('groups_join',$this->Call('groups.join',$params));
+
+	}
+	/**
+	 * позволяет покинуть группу или публичную страницу.
+	 * @param $gid mixed Идентификатор группы, публичной страницы или встречи.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_groups_leave
+	 * @link http://vk.com/developers.php?oid=-1&p=groups.leave
+	 */
+	public function groups_leave($gid){
+		$params = array();
+		$params['gid'] = $gid;
+		return VKDoc_ReturnValue::factory('groups_leave',$this->Call('groups.leave',$params));
+
+	}
+	/**
+	 * позволяет получить приглашения в группы.
+	 * @param $offset mixed смещение, необходимое для выборки определённого подмножества приглашений.
+	 * @param $count mixed количество приглашений, которое необходимо вернуть.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_groups_getInvites
+	 * @link http://vk.com/developers.php?oid=-1&p=groups.getInvites
+	 */
+	public function groups_getInvites($offset = null, $count = null){
+		$params = array();
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		return VKDoc_ReturnValue::factory('groups_getInvites',$this->Call('groups.getInvites',$params));
+
+	}
+	/**
+	 * возвращает детальную информацию об опросе.
+	 * @param $poll_id mixed идентификатор опроса, информацию о котором необходимо получить.
+	 * @param $owner_id mixed идентификатор владельца опроса, информацию о котором необходимо получить. Если параметр не указан, то он считается равным идентификатору текущего пользователя.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_polls_getById
+	 * @link http://vk.com/developers.php?oid=-1&p=polls.getById
+	 */
+	public function polls_getById($poll_id, $owner_id = null){
+		$params = array();
+		$params['poll_id'] = $poll_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('polls_getById',$this->Call('polls.getById',$params));
 
 	}
 	/**
-	 * adds the current user's vote to the chosen option.
-	 * @param $answerid mixed identifier of the answer option for which it is necessary to vote.
-	 * @param $pollid mixed identifier of the poll in which it is necessary to vote.
-	 * @param $ownerid mixed identifier of the poll owner. If this parameter is not set, then it is assumed it is equal to the identifier of the current user.
+	 * добавляет голос текущего пользователя к выбранному варианту ответа.
+	 * @param $poll_id mixed идентификатор опроса, в котором необходимо проголосовать.
+	 * @param $answer_id mixed идентификатор варианта ответа, за который необходимо проголосовать.
+	 * @param $owner_id mixed идентификатор владельца опроса. Если параметр не указан, то он считается равным идентификатору текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_polls_addVote
+	 * @link http://vk.com/developers.php?oid=-1&p=polls.addVote
 	 */
-	public function polls_addVote($answerid, $pollid, $ownerid = null){
+	public function polls_addVote($poll_id, $answer_id, $owner_id = null){
 		$params = array();
-		$params['answerid'] = $answerid;
-		$params['pollid'] = $pollid;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		$params['poll_id'] = $poll_id;
+		$params['answer_id'] = $answer_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('polls_addVote',$this->Call('polls.addVote',$params));
 
 	}
 	/**
-	 * removes the current user's vote from the chosen option.
-	 * @param $answerid mixed identifier of the answer option from which it is necessary to remove a vote.
-	 * @param $pollid mixed identifier of the poll from which it is necessary to remove a vote.
-	 * @param $ownerid mixed identifier of the poll owner. If this parameter is not set, then it is assumed it is equal to the identifier of the current user.
+	 * снимает голос текущего пользователя с выбранного варианта ответа.
+	 * @param $poll_id mixed идентификатор опроса, в котором необходимо снять голос.
+	 * @param $answer_id mixed идентификатор варианта ответа, с которого необходимо снять голос.
+	 * @param $owner_id mixed идентификатор владельца опроса. Если параметр не указан, то он считается равным идентификатору текущего пользователя.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_polls_deleteVote
+	 * @link http://vk.com/developers.php?oid=-1&p=polls.deleteVote
 	 */
-	public function polls_deleteVote($answerid, $pollid, $ownerid = null){
+	public function polls_deleteVote($poll_id, $answer_id, $owner_id = null){
 		$params = array();
-		$params['answerid'] = $answerid;
-		$params['pollid'] = $pollid;
-		if($ownerid !== null){ $params['ownerid'] = $ownerid;}
+		$params['poll_id'] = $poll_id;
+		$params['answer_id'] = $answer_id;
+		if($owner_id !== null){ $params['owner_id'] = $owner_id;}
 		return VKDoc_ReturnValue::factory('polls_deleteVote',$this->Call('polls.deleteVote',$params));
 
 	}
 	/**
-	 * returns a list of a user's subscriptions.
-	 * @param $count mixed the number of returning user identifiers. If this parameter is not set, then it is assumed that is equals 100. Maximum parameter value - 1000.
-	 * @param $offset mixed offset relative to the start of the list for selecting a certain subcollection. If this parameter is not set, then it is assumed it equals 0.
-	 * @param $uid mixed identifier of the user whose list needs to be obtained. If this parameter is not set, then it is assumed that it equals to the identifier of the current user.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_subscriptions_get
+	 * добавляет указанного пользователя в список подписок текущего пользователя.
+	 * @param $uid mixed идентификатор пользователя, которого необходимо добавить в список подписок.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_subscriptions_follow
+	 * @link http://vk.com/developers.php?oid=-1&p=subscriptions.follow
 	 */
-	public function subscriptions_get($count = null, $offset = null, $uid = null){
+	public function subscriptions_follow($uid){
 		$params = array();
-		if($count !== null){ $params['count'] = $count;}
-		if($offset !== null){ $params['offset'] = $offset;}
-		if($uid !== null){ $params['uid'] = $uid;}
-		return VKDoc_ReturnValue::factory('subscriptions_get',$this->Call('subscriptions.get',$params));
+		$params['uid'] = $uid;
+		return VKDoc_ReturnValue::factory('subscriptions_follow',$this->Call('subscriptions.follow',$params));
 
 	}
 	/**
-	 * adds the selected user to the list of followers of the current user.
-	 * @param $count mixed the number of returning user identifiers. If this parameter is not set, then it is assumed that is equals 100. Maximum parameter value - 1000.
-	 * @param $offset mixed offset relative to the start of the list for selecting a certain subcollection. If this parameter is not set, then it is assumed it equals 0.
-	 * @param $uid mixed identifier of the user whose list needs to be obtained. If this parameter is not set, then it is assumed that it equals to the identifier of the current user.
-	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_subscriptions_getFollowers
-	 */
-	public function subscriptions_getFollowers($count = null, $offset = null, $uid = null){
-		$params = array();
-		if($count !== null){ $params['count'] = $count;}
-		if($offset !== null){ $params['offset'] = $offset;}
-		if($uid !== null){ $params['uid'] = $uid;}
-		return VKDoc_ReturnValue::factory('subscriptions_getFollowers',$this->Call('subscriptions.getFollowers',$params));
-
-	}
-	/**
-	 * deletes the selected user from the list of followers of the current user.
-	 * @param $uid mixed identifier of the user who needs to be removed from the list of subscriptions.
+	 * удаляет указанного пользователя из списка подписок текущего пользователя.
+	 * @param $uid mixed идентификатор пользователя, которого необходимо удалить из списка подписок.
 	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_subscriptions_unfollow
+	 * @link http://vk.com/developers.php?oid=-1&p=subscriptions.unfollow
 	 */
 	public function subscriptions_unfollow($uid){
 		$params = array();
 		$params['uid'] = $uid;
 		return VKDoc_ReturnValue::factory('subscriptions_unfollow',$this->Call('subscriptions.unfollow',$params));
+
+	}
+	/**
+	 * принимает список контактов пользователя для поиска зарегистрированных ВКонтакте пользователей методом [[friends.getSuggestions]].
+	 * @param $contacts mixed список телефонов или email адресов друзей пользователя, указанных через запятую.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_account_importContacts
+	 * @link http://vk.com/developers.php?oid=-1&p=account.importContacts
+	 */
+	public function account_importContacts($contacts = null){
+		$params = array();
+		if($contacts !== null){ $params['contacts'] = $contacts;}
+		return VKDoc_ReturnValue::factory('account_importContacts',$this->Call('account.importContacts',$params));
+
+	}
+	/**
+	 * подписывает устройство на Push уведомления.
+	 * @param $token mixed Идентификатор устройства, используемый для отправки уведомлений.
+	 * @param $device_model mixed Строковое название модели устройства.
+	 * @param $system_version mixed Строковая версия операционной системы устройства.
+	 * @param $no_text mixed '1' - Не передавать текст сообщения в push уведомлении. '0' - (по умолчанию) текст сообщения передаётся.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_account_registerDevice
+	 * @link http://vk.com/developers.php?oid=-1&p=account.registerDevice
+	 */
+	public function account_registerDevice($token, $device_model = null, $system_version = null, $no_text = null){
+		$params = array();
+		$params['token'] = $token;
+		if($device_model !== null){ $params['device_model'] = $device_model;}
+		if($system_version !== null){ $params['system_version'] = $system_version;}
+		if($no_text !== null){ $params['no_text'] = $no_text;}
+		return VKDoc_ReturnValue::factory('account_registerDevice',$this->Call('account.registerDevice',$params));
+
+	}
+	/**
+	 * отписывает устройство от Push уведомлений.
+	 * @param $token mixed Идентификатор устройства, использованный в методе [[account.registerDevice]].
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_account_unregisterDevice
+	 * @link http://vk.com/developers.php?oid=-1&p=account.unregisterDevice
+	 */
+	public function account_unregisterDevice($token){
+		$params = array();
+		$params['token'] = $token;
+		return VKDoc_ReturnValue::factory('account_unregisterDevice',$this->Call('account.unregisterDevice',$params));
+
+	}
+	/**
+	 * отключает звук в параметрах, отправляемых push уведомлений на заданный промежуток времени.
+	 * @param $token mixed Идентификатор устройства, использованный в методе [[account.registerDevice]].
+	 * @param $time mixed Количество секунд, в течение которых уведомления будут приходить без звука.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_account_setSilenceMode
+	 * @link http://vk.com/developers.php?oid=-1&p=account.setSilenceMode
+	 */
+	public function account_setSilenceMode($token, $time){
+		$params = array();
+		$params['token'] = $token;
+		$params['time'] = $time;
+		return VKDoc_ReturnValue::factory('account_setSilenceMode',$this->Call('account.setSilenceMode',$params));
+
+	}
+	/**
+	 * помечает текущего пользователя как online.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_account_setOnline
+	 * @link http://vk.com/developers.php?oid=-1&p=account.setOnline
+	 */
+	public function account_setOnline(){
+		$params = array();
+		return VKDoc_ReturnValue::factory('account_setOnline',$this->Call('account.setOnline',$params));
+
+	}
+	/**
+	 * Возвращает список тем в обсуждениях указанной группы.
+	 * @param $gid mixed ID группы, список тем которой необходимо получить.
+	 * @param $tids mixed Список идентификаторов тем, которые необходимо получить (не более 100). По умолчанию возвращаются все темы. Если указан данный параметр, игнорируются параметры order, offset и count (возвращаются все запрошенные темы в указанном порядке).
+	 * @param $extended mixed Если указать в качестве этого параметра '1', то будет возвращена информация о пользователях, являющихся создателями тем или оставившими в них последнее сообщение. По умолчанию '0'.
+	 * @param $order mixed Порядок, в котором необходимо вернуть список тем. Возможные значения:1 - по убыванию даты обновления,2 - по убыванию даты создания,-1 - по возрастанию даты обновления,-2 - по возрастанию даты создания.По умолчанию темы возвращаются в порядке, установленном администратором группы. "Прилепленные" темы при любой сортировке возвращаются первыми в списке.
+	 * @param $offset mixed Смещение, необходимое для выборки определенного подмножества тем.
+	 * @param $count mixed Количество тем, которое необходимо получить (но не более 100). По умолчанию 40.
+	 * @param $preview mixed Набор флагов, определяющий, необходимо ли вернуть вместе с информацией о темах текст первых и последних сообщений в них. Является суммой флагов:1 - вернуть первое сообщение в каждой теме (поле first_comment),2 - вернуть последнее сообщение в каждой теме (поле last_comment).
+	 * @param $preview_length mixed Количество символов, по которому нужно обрезать первое и последнее сообщение. Укажите 0, если Вы не хотите обрезать сообщение. (по умолчанию 90).
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_board_getTopics
+	 * @link http://vk.com/developers.php?oid=-1&p=board.getTopics
+	 */
+	public function board_getTopics($gid, $tids = null, $extended = null, $order = null, $offset = null, $count = null, $preview = null, $preview_length = null){
+		$params = array();
+		$params['gid'] = $gid;
+		if($tids !== null){ $params['tids'] = $tids;}
+		if($extended !== null){ $params['extended'] = $extended;}
+		if($order !== null){ $params['order'] = $order;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		if($preview !== null){ $params['preview'] = $preview;}
+		if($preview_length !== null){ $params['preview_length'] = $preview_length;}
+		return VKDoc_ReturnValue::factory('board_getTopics',$this->Call('board.getTopics',$params));
+
+	}
+	/**
+	 * Удаляет тему в обсуждениях группы.
+	 * @param $gid mixed ID группы, в обсуждениях которой необходимо удалить тему.
+	 * @param $tid mixed ID удаляемой темы
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_board_deleteTopic
+	 * @link http://vk.com/developers.php?oid=-1&p=board.deleteTopic
+	 */
+	public function board_deleteTopic($gid, $tid){
+		$params = array();
+		$params['gid'] = $gid;
+		$params['tid'] = $tid;
+		return VKDoc_ReturnValue::factory('board_deleteTopic',$this->Call('board.deleteTopic',$params));
+
+	}
+	/**
+	 * Возвращает список сообщений в указанной теме.
+	 * @param $gid mixed ID группы, к обсуждениям которой относится указанная тема.
+	 * @param $tid mixed ID темы в группе
+	 * @param $extended mixed Если указать в качестве этого параметра '1', то будет возвращена информация о пользователях, являющихся авторами сообщений. По умолчанию '0'.
+	 * @param $offset mixed Смещение, необходимое для выборки определенного подмножества сообщений.
+	 * @param $count mixed Количество сообщений, которое необходимо получить (но не более 100). По умолчанию 20.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_board_getComments
+	 * @link http://vk.com/developers.php?oid=-1&p=board.getComments
+	 */
+	public function board_getComments($gid, $tid, $extended = null, $offset = null, $count = null){
+		$params = array();
+		$params['gid'] = $gid;
+		$params['tid'] = $tid;
+		if($extended !== null){ $params['extended'] = $extended;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		return VKDoc_ReturnValue::factory('board_getComments',$this->Call('board.getComments',$params));
+
+	}
+	/**
+	 * Добавляет новое сообщение в теме группы.
+	 * @param $gid mixed ID группы, в обсуждениях которой необходимо создать новое сообщение.
+	 * @param $tid mixed ID темы, в которой необходимо оставить новое сообщение.
+	 * @param $text mixed Текст нового сообщения в теме. Параметр является опциональным только если указан параметр attachments.
+	 * @param $attachments mixed Список объектов, приложенных к сообщению и разделённых символом '","'. Поле attachments представляется в формате:_,_ - тип медиа-приложения:photo - фотографияvideo - видеозаписьaudio - аудиозаписьdoc - документ - идентификатор владельца медиа-приложения - идентификатор медиа-приложения.Например:photo100172_166443618,photo66748_265827614
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_board_addComment
+	 * @link http://vk.com/developers.php?oid=-1&p=board.addComment
+	 */
+	public function board_addComment($gid, $tid, $text = null, $attachments = null){
+		$params = array();
+		$params['gid'] = $gid;
+		$params['tid'] = $tid;
+		if($text !== null){ $params['text'] = $text;}
+		if($attachments !== null){ $params['attachments'] = $attachments;}
+		return VKDoc_ReturnValue::factory('board_addComment',$this->Call('board.addComment',$params));
+
+	}
+	/**
+	 * Редактирует одно из сообщений в теме группы.
+	 * @param $gid mixed ID группы, в обсуждениях которой необходимо изменить сообщение.
+	 * @param $tid mixed ID темы, в которой необходимо изменить сообщение.
+	 * @param $cid mixed ID сообщения, которое необходимо изменить.
+	 * @param $text mixed Новый текст сообщения. Параметр является опциональным только если указан параметр attachments.
+	 * @param $attachments mixed Список объектов, приложенных к сообщению и разделённых символом '","'. Поле attachments представляется в формате:_,_ - тип медиа-приложения:photo - фотографияvideo - видеозаписьaudio - аудиозаписьdoc - документ - идентификатор владельца медиа-приложения - идентификатор медиа-приложения.Например:photo100172_166443618,photo66748_265827614
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_board_editComment
+	 * @link http://vk.com/developers.php?oid=-1&p=board.editComment
+	 */
+	public function board_editComment($gid, $tid, $cid, $text = null, $attachments = null){
+		$params = array();
+		$params['gid'] = $gid;
+		$params['tid'] = $tid;
+		$params['cid'] = $cid;
+		if($text !== null){ $params['text'] = $text;}
+		if($attachments !== null){ $params['attachments'] = $attachments;}
+		return VKDoc_ReturnValue::factory('board_editComment',$this->Call('board.editComment',$params));
+
+	}
+	/**
+	 * Удаляет сообщение темы в обсуждениях группы.
+	 * @param $gid mixed ID группы, в обсуждениях которой необходимо удалить сообщение.
+	 * @param $tid mixed ID темы, которой принадлежит удаляемое сообщение
+	 * @param $cid mixed ID удаляемого сообщения
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_board_deleteComment
+	 * @link http://vk.com/developers.php?oid=-1&p=board.deleteComment
+	 */
+	public function board_deleteComment($gid, $tid, $cid){
+		$params = array();
+		$params['gid'] = $gid;
+		$params['tid'] = $tid;
+		$params['cid'] = $cid;
+		return VKDoc_ReturnValue::factory('board_deleteComment',$this->Call('board.deleteComment',$params));
+
+	}
+	/**
+	 * Восстанавливает удаленное сообщение темы в обсуждениях группы.
+	 * @param $gid mixed ID группы, в обсуждениях которой необходимо восстановить сообщение.
+	 * @param $tid mixed ID темы, которой принадлежало удаленное сообщение
+	 * @param $cid mixed ID удаленного сообщения
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_board_restoreComment
+	 * @link http://vk.com/developers.php?oid=-1&p=board.restoreComment
+	 */
+	public function board_restoreComment($gid, $tid, $cid){
+		$params = array();
+		$params['gid'] = $gid;
+		$params['tid'] = $tid;
+		$params['cid'] = $cid;
+		return VKDoc_ReturnValue::factory('board_restoreComment',$this->Call('board.restoreComment',$params));
+
+	}
+	/**
+	 * Создает новую тему в списке обсуждений группы.
+	 * @param $gid mixed ID группы, в обсуждениях которой необходимо создать новую тему.
+	 * @param $title mixed Заголовок создаваемой темы.
+	 * @param $text mixed Текст первого сообщения в теме.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_board_addTopic
+	 * @link http://vk.com/developers.php?oid=-1&p=board.addTopic
+	 */
+	public function board_addTopic($gid, $title, $text){
+		$params = array();
+		$params['gid'] = $gid;
+		$params['title'] = $title;
+		$params['text'] = $text;
+		return VKDoc_ReturnValue::factory('board_addTopic',$this->Call('board.addTopic',$params));
+
+	}
+	/**
+	 * Закрывает тему в списке обсуждений группы (в такой теме невозможно оставлять новые сообщения).
+	 * @param $gid mixed ID группы, в обсуждениях которой необходимо закрыть тему.
+	 * @param $tid mixed ID темы, которую необходимо закрыть.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_board_closeTopic
+	 * @link http://vk.com/developers.php?oid=-1&p=board.closeTopic
+	 */
+	public function board_closeTopic($gid, $tid){
+		$params = array();
+		$params['gid'] = $gid;
+		$params['tid'] = $tid;
+		return VKDoc_ReturnValue::factory('board_closeTopic',$this->Call('board.closeTopic',$params));
+
+	}
+	/**
+	 * Закрепляет тему в списке обсуждений группы (такая тема при любой сортировке выводится выше остальных).
+	 * @param $gid mixed ID группы, в обсуждениях которой необходимо закрепить тему.
+	 * @param $tid mixed ID темы, которую необходимо закрепить.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_board_fixTopic
+	 * @link http://vk.com/developers.php?oid=-1&p=board.fixTopic
+	 */
+	public function board_fixTopic($gid, $tid){
+		$params = array();
+		$params['gid'] = $gid;
+		$params['tid'] = $tid;
+		return VKDoc_ReturnValue::factory('board_fixTopic',$this->Call('board.fixTopic',$params));
+
+	}
+	/**
+	 * Отменяет прикрепление темы в списке обсуждений группы (тема будет выводиться согласно выбранной сортировке).
+	 * @param $gid mixed ID группы, в обсуждениях которой необходимо отменить прикрепление темы.
+	 * @param $tid mixed ID темы, прикрепление которой необходимо отменить.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_board_unfixTopic
+	 * @link http://vk.com/developers.php?oid=-1&p=board.unfixTopic
+	 */
+	public function board_unfixTopic($gid, $tid){
+		$params = array();
+		$params['gid'] = $gid;
+		$params['tid'] = $tid;
+		return VKDoc_ReturnValue::factory('board_unfixTopic',$this->Call('board.unfixTopic',$params));
+
+	}
+	/**
+	 * возвращает пользователей, которых текущий пользователь добавил в закладки.
+	 * @param $fields mixed Список полей профилей пользователей, которые необходимо вернуть. См. [[Описание полей параметра fields]]
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_fave_getUsers
+	 * @link http://vk.com/developers.php?oid=-1&p=fave.getUsers
+	 */
+	public function fave_getUsers($fields = null){
+		$params = array();
+		if($fields !== null){ $params['fields'] = $fields;}
+		return VKDoc_ReturnValue::factory('fave_getUsers',$this->Call('fave.getUsers',$params));
+
+	}
+	/**
+	 * возвращает список фотографий, на которых текущий пользователь поставил отметку "Мне нравится".
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества фотографий.
+	 * @param $count mixed количество фотографий, которое необходимо получить.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_fave_getPhotos
+	 * @link http://vk.com/developers.php?oid=-1&p=fave.getPhotos
+	 */
+	public function fave_getPhotos($offset = null, $count = null){
+		$params = array();
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		return VKDoc_ReturnValue::factory('fave_getPhotos',$this->Call('fave.getPhotos',$params));
+
+	}
+	/**
+	 * возвращает список видеозаписей, на которых текущий пользователь поставил отметку "Мне нравится".
+	 * @param $count mixed количество возвращаемых видеозаписей.
+	 * @param $offset mixed смещение относительно первой найденной видеозаписи для выборки определенного подмножества.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_fave_getVideos
+	 * @link http://vk.com/developers.php?oid=-1&p=fave.getVideos
+	 */
+	public function fave_getVideos($count = null, $offset = null){
+		$params = array();
+		if($count !== null){ $params['count'] = $count;}
+		if($offset !== null){ $params['offset'] = $offset;}
+		return VKDoc_ReturnValue::factory('fave_getVideos',$this->Call('fave.getVideos',$params));
+
+	}
+	/**
+	 * возвращает список записей, на которых текущий пользователь поставил отметку "Мне нравится".
+	 * @param $offset mixed смещение, необходимое для выборки определенного подмножества сообщений.
+	 * @param $count mixed количество сообщений, которое необходимо получить (но не более 100).
+	 * @param $extended mixed '1' - будут возвращены три массива 'wall', 'profiles', и 'groups'. По умолчанию дополнительные поля не возвращаются.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_fave_getPosts
+	 * @link http://vk.com/developers.php?oid=-1&p=fave.getPosts
+	 */
+	public function fave_getPosts($offset = null, $count = null, $extended = null){
+		$params = array();
+		if($offset !== null){ $params['offset'] = $offset;}
+		if($count !== null){ $params['count'] = $count;}
+		if($extended !== null){ $params['extended'] = $extended;}
+		return VKDoc_ReturnValue::factory('fave_getPosts',$this->Call('fave.getPosts',$params));
+
+	}
+	/**
+	 * возвращает ссылки, которые текущий пользователь добавил в закладки.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_fave_getLinks
+	 * @link http://vk.com/developers.php?oid=-1&p=fave.getLinks
+	 */
+	public function fave_getLinks(){
+		$params = array();
+		return VKDoc_ReturnValue::factory('fave_getLinks',$this->Call('fave.getLinks',$params));
+
+	}
+	/**
+	 * регистрирует нового пользователя по номеру телефона.
+	 * @param $phone mixed Номер телефона регистрируемого пользователя. Номер телефона может быть проверен заранее методом [[auth.checkPhone]].
+	 * @param $first_name mixed Имя пользователя.
+	 * @param $last_name mixed Фамилия пользователя.
+	 * @param $client_id mixed Идентификатор Вашего приложения.
+	 * @param $client_secret mixed Секретный ключ Вашего приложения.
+	 * @param $sex mixed Пол пользователя: '1' - Женский, '2' - Мужской.
+	 * @param $password mixed Пароль пользователя, который будет использоваться при входе. Не меньше '6' символов. Также пароль может быть указан позже, при вызове метода [[auth.confirm]].
+	 * @param $voice mixed '1' - в случае если вместо SMS необходимо позвонить на указанный номер и продиктовать код голосом. '0' - (по умолчанию) необходимо отправить SMS.
+	 * @param $sid mixed Идентификатор сессии, необходимый при повторном вызове метода, в случае если SMS сообщение доставлено не было.
+	 * @param $test_mode mixed '1' - тестовый режим, при котором не будет зарегистрирован новый пользователь, но при этом номер не будет проверяться на использованность. '0' - (по умолчанию) рабочий.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_auth_signup
+	 * @link http://vk.com/developers.php?oid=-1&p=auth.signup
+	 */
+	public function auth_signup($phone, $first_name, $last_name, $client_id, $client_secret, $sex = null, $password = null, $voice = null, $sid = null, $test_mode = null){
+		$params = array();
+		$params['phone'] = $phone;
+		$params['first_name'] = $first_name;
+		$params['last_name'] = $last_name;
+		$params['client_id'] = $client_id;
+		$params['client_secret'] = $client_secret;
+		if($sex !== null){ $params['sex'] = $sex;}
+		if($password !== null){ $params['password'] = $password;}
+		if($voice !== null){ $params['voice'] = $voice;}
+		if($sid !== null){ $params['sid'] = $sid;}
+		if($test_mode !== null){ $params['test_mode'] = $test_mode;}
+		return VKDoc_ReturnValue::factory('auth_signup',$this->Call('auth.signup',$params));
+
+	}
+	/**
+	 * завершает регистрацию нового пользователя, начатую методом auth.signup, по коду, полученному по SMS.
+	 * @param $phone mixed Номер телефона регистрируемого пользователя. Номер телефона может быть проверен заранее методом [[auth.checkPhone]].
+	 * @param $code mixed Код, полученный через SMS в результате выполнения метода [[auth.signup]].
+	 * @param $client_id mixed Идентификатор Вашего приложения.
+	 * @param $client_secret mixed Секретный ключ Вашего приложения.
+	 * @param $password mixed Пароль пользователя, который будет использоваться при входе. Не меньше '6' символов. Также пароль может быть указан позже, при вызове метода [[auth.signup]].
+	 * @param $test_mode mixed '1' - тестовый режим, при котором не будет зарегистрирован новый пользователь, но при этом номер не будет проверяться на использованность. '0' - (по умолчанию) рабочий.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_auth_confirm
+	 * @link http://vk.com/developers.php?oid=-1&p=auth.confirm
+	 */
+	public function auth_confirm($phone, $code, $client_id, $client_secret, $password = null, $test_mode = null){
+		$params = array();
+		$params['phone'] = $phone;
+		$params['code'] = $code;
+		$params['client_id'] = $client_id;
+		$params['client_secret'] = $client_secret;
+		if($password !== null){ $params['password'] = $password;}
+		if($test_mode !== null){ $params['test_mode'] = $test_mode;}
+		return VKDoc_ReturnValue::factory('auth_confirm',$this->Call('auth.confirm',$params));
+
+	}
+	/**
+	 * проверяет правильность введённого номера.
+	 * @param $phone mixed Номер телефона пользователя.
+	 * @param $client_id mixed Идентификатор Вашего приложения.
+	 * @param $client_secret mixed Секретный ключ Вашего приложения.
+	 * @return VKDoc_ReturnValue|VKDoc_ReturnValue_auth_checkPhone
+	 * @link http://vk.com/developers.php?oid=-1&p=auth.checkPhone
+	 */
+	public function auth_checkPhone($phone, $client_id = null, $client_secret = null){
+		$params = array();
+		$params['phone'] = $phone;
+		if($client_id !== null){ $params['client_id'] = $client_id;}
+		if($client_secret !== null){ $params['client_secret'] = $client_secret;}
+		return VKDoc_ReturnValue::factory('auth_checkPhone',$this->Call('auth.checkPhone',$params));
 
 	}
 }
