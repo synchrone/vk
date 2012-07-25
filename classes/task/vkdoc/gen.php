@@ -1,4 +1,8 @@
 <?php defined('SYSPATH') or die('No direct script access.');
+
+//this overrides the overrider classes/vk/api.php, because full api may be generated with errors
+abstract class VK_Api extends VKDoc_Api_Empty{} //Yes, blame me
+
 /**
  *
  * @package
