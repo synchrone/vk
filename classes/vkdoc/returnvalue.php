@@ -39,4 +39,8 @@ class VKDoc_ReturnValue extends stdClass implements ArrayAccess
         return $this->_data[$offset];
     }
 
+    public function unwrap(){
+        return $this->_data;
+    }
+
 }
