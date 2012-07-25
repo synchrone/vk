@@ -14,8 +14,14 @@ class VKDoc_Argument
     public $description;
 
     public function __construct($params){
-        $this->name = preg_replace('/[^a-zA-Z0-9]/','',trim($params['name'])); // there are cases ...
-        $this->name = str_replace('с','c',$this->name);//TODO: russian [эс] to c hack!
+        $params['name'] = trim(str_replace('с','c',$params['name']));//TODO: russian [эс] to c hack!
+
+        $this->name = preg_replace('/[^a-zA-Z0-9_]/','',$params['name']); // there are cases ...
+        if($this->name != $params['name']){
+            $name_parts = preg_split('/[^a-zA-Z0-9]/',$params['name']);
+            $this->name = $name_parts[0];
+        }
+
         $this->optional = trim($params['optional']) !== '' ? false : true;
         $this->description = str_replace("'''","'",trim($params['description']));
     }
