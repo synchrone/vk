@@ -80,14 +80,14 @@ class VKDoc
             if($method->get_name() == 'execute'){continue;} //that impl is hardcoded and proven to work
             try{
                 if(count($method->get_arguments())===0 && !in_array($method->get_name(),$this->_noarg_methods)){
-                    echo sprintf('Notice: Method %s suddenly has 0 arguments. Check it\'s doc at http://vk.com/developers.php?oid=-%d&p=%s'.PHP_EOL,
-                        $method->get_name(), self::$languages[self::$language]['api']['gid'], $method->get_name());
+                    echo sprintf('Notice: Method %s suddenly has 0 arguments. Check it\'s doc at %s'.PHP_EOL,
+                        $method->get_name(), $method->get_doc_url());
                 }
                 $doc.=$method->get_code();
             }catch(Exception $e)
             {
-                echo sprintf('Error: Failed to parse documentation for method %s. Check it\'s doc at http://vk.com/developers.php?oid=-%d&p=%s'.PHP_EOL,
-                        $method->get_name(), self::$languages[self::$language]['api']['gid'], $method->get_name());
+                echo sprintf('Error: Failed to parse documentation for method %s. Check it\'s doc at %s'.PHP_EOL,
+                        $method->get_name(), $method->get_doc_url());
                 $doc.=$method->get_error_code();
             }
         }

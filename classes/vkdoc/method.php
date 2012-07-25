@@ -43,6 +43,9 @@ class VKDoc_Method
     public function get_safename(){
         return $this->safename;
     }
+    public function get_doc_url(){
+        return sprintf('http://vk.com/developers.php?oid=-%d&p=%s',VKDoc::$languages[VKDoc::$language]['api']['gid'],$this->name);
+    }
 
     protected function get_wiki(){
         $cache = Cache::instance();
@@ -135,6 +138,7 @@ class VKDoc_Method
             );
         }
         $doc.= $pf.'@return VKDoc_ReturnValue|'.$this->get_return_classname().
+               $pf.'@link '.$this->get_doc_url().
                "\n\t */\n";
         return $doc;
     }
