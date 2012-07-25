@@ -2,7 +2,7 @@
 
 if(isset($out) && $out!=''){ ?>
     <h2>Code output</h2>
-    <pre><?=$out?></pre>
+    <pre><?php echo $out; ?></pre>
     <br /><br />
 <?php } ?>
 
@@ -17,7 +17,7 @@ if(isset($out) && $out!=''){ ?>
 	  	?>
 	</select>
 	<br />
-    <textarea name="code" rows="20" cols="120"><?=$code?>
+    <textarea name="code" rows="20" cols="120"><?php echo $code; ?>
 </textarea>
     <br />
     <input type="submit" value="Execute!">
