@@ -107,6 +107,14 @@ class VK_CmsApi extends VK_DesktopApi
         return $data['html'];
     }
 
+    public function pages_get($pid = null, $title = null, $gid = null, $mid = null, $global = null, $need_html = null){
+        $p = parent::pages_get($pid,$title,$gid,$mid,$global,$need_html);
+        if($need_html){
+            $p['html'] = preg_replace('/src="(\/.+)"/imsU','src="http://vk.com$1"',$p['html']);
+        }
+        return $p;
+    }
+
     public function wall_getWithNames($p,$debug=false)
 	{
         if(!isset($p['count'])){$p['count'] = 30;}
