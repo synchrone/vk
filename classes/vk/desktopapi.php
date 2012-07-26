@@ -22,6 +22,18 @@ class VK_DesktopApi extends VK_Api{
     );
 
     private $op_history = array();
+    /**
+     * Содержит временные и постоянные параметры текущей vk сессии
+     * @param app_id int
+     * @param app_secret string
+     * @param user_email string
+     * @param user_pass string
+     * @param
+     * @param token array
+     * @param group_id int
+     * @param group_name string
+     * @var array
+     */
     protected $config;
 	protected static $instance;
 	
@@ -76,6 +88,7 @@ class VK_DesktopApi extends VK_Api{
     public function GetToken($path='access_token'){
         return Arr::path($this->config['token'],$path);
     }
+
     public function Execute($code,$debug=false,$testmode=false){
        if($debug){
            var_dump($code);
@@ -119,7 +132,43 @@ class VK_DesktopApi extends VK_Api{
      * @return string App auth code
      * @throws VK_Exception
      */
-    private function LoginUser(){
+    private function UserAuthorizeApp(){
+        $last_request = $this->LoginUser();
+
+        if(strpos($last_request['contents'],'Login success')===false){
+            //Stage 2: Granting perms
+            $nokopage = Nokogiri::fromHtml($last_request['contents']);
+            $form = $nokopage->get('form')->toArray();
+            if(!isset($form[0])){
+                throw new VK_Exception('No forms on stage 2 html',$last_request);
+            }
+            $form = $form[0];
+            if(substr($form['action'],0,4) != 'http'){$form['action'] = 'http://api.vk.com'.$form['action'];}
+
+            $params = array();
+            foreach($nokopage->get('form input')->toArray() as $i){
+                $i['name'] = isset($i['name']) ? $i['name'] : '';
+                $i['value'] = isset($i['value']) ? $i['value'] : '';
+                $params[$i['name']] = $i['value'];
+            }
+
+            $last_request = $this->Curl($form['action'],array(),array(
+                CURLOPT_POST => true,
+                CURLOPT_FOLLOWLOCATION => false,
+                CURLOPT_COOKIE => $last_request['cookie']
+            ));
+        }
+
+        $rurl = end($last_request['info']);
+        $rurl=$rurl['url'];
+        if(($erroffset = strpos($rurl,'error_description=')) !== false){
+            throw new VK_Exception(substr($rurl,urldecode($erroffset)),$last_request);
+        }
+        preg_match('/code=([a-zA-Z0-9]+)/',$rurl,$code);
+        return $code[1];
+    }
+
+    protected function LoginUser(){
         list($login_url,$params) = $this->GetUserLoginUrl('blank.html', true);
         $params['display'] = 'wap';
 
@@ -151,38 +200,8 @@ class VK_DesktopApi extends VK_Api{
         if(strpos($last_request['contents'],'неверный логин')!==false){
             throw new VK_Exception('Wrong auth data',$last_request);
         }
-
-        if(strpos($last_request['contents'],'Login success')===false){
-            //Stage 2: Granting perms
-            $nokopage = Nokogiri::fromHtml($last_request['contents']);
-            $form = $nokopage->get('form')->toArray();
-            if(!isset($form[0])){
-                throw new VK_Exception('No forms on stage 2 html',$last_request);
-            }
-            $form = $form[0];
-            if(substr($form['action'],0,4) != 'http'){$form['action'] = 'http://api.vk.com'.$form['action'];}
-
-            $params = array();
-            foreach($nokopage->get('form input')->toArray() as $i){
-                $i['name'] = isset($i['name']) ? $i['name'] : '';
-                $i['value'] = isset($i['value']) ? $i['value'] : '';
-                $params[$i['name']] = $i['value'];
-            }
-
-            $last_request = $this->Curl($form['action'],array(),array(
-                CURLOPT_POST => true, //$form['method'] == 'POST' ? true : false,
-                CURLOPT_FOLLOWLOCATION => false,
-                CURLOPT_COOKIE => $last_request['cookie']
-            ));
-        }
-
-        $rurl = end($last_request['info']);
-        $rurl=$rurl['url'];
-        if(($erroffset = strpos($rurl,'error_description=')) !== false){
-            throw new VK_Exception(substr($rurl,urldecode($erroffset)),$last_request);
-        }
-        preg_match('/code=([a-zA-Z0-9]+)/',$rurl,$code);
-        return $code[1];
+        $this->config['user_cookie'] = $last_request['cookie'];
+        return $last_request;
     }
 
     public function GetUserLoginUrl($redirect_uri = null, $scope = null)
@@ -221,7 +240,7 @@ class VK_DesktopApi extends VK_Api{
         }
 
         if($code === null){
-            $code = $this->LoginUser();
+            $code = $this->UserAuthorizeApp();
         }
         $token = $this->Curl('https://api.vk.com/oauth/access_token',array(
             'client_id' => $this->config['app_id'],
