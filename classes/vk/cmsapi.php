@@ -22,27 +22,6 @@ class VK_CmsApi extends VK_DesktopApi
         return $response[0];
     }
 
-    public function photos_getAlbumsWithCovers($p,$debug=false)
-	{
-        $data = $this->Execute('
-            var albums = API.photos.getAlbums('.json_encode($p).');
-            var covers = API.photos.getById({"photos":'.$this->constructCoverIds().'});
-            return {"a":albums, "covers":covers};
-        ',$debug);
-        for($i=0;$i<count($data['a']);$i++){
-            if(!isset($data['covers'][$i])){
-                $data['covers'][$i]['src'] = self::VK_URL.'images/question_100.gif';
-            }
-        }
-        return $data;
-    }
-    private function constructCoverIds($num=30)
-	{
-        $covers = array();
-        for($i=0;$i<=$num;$i++){
-            $covers[] = 'albums['.$i.'].owner_id+"_"+albums['.$i.'].thumb_id';
-        }
-        return implode('+","+',$covers);
     }
 
     public function groups_getByIdWithLocation($gids,$fields = null){
