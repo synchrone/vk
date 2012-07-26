@@ -22,6 +22,15 @@ class VK_CmsApi extends VK_DesktopApi
         return $response[0];
     }
 
+    public function photos_getMainAlbumThumbs($gid){
+        //TODO: We cannot determine main album id yet, so we just take the first one
+        $a = $this->Execute(sprintf('
+            var gid = %d;
+            var album_id = API.photos.getAlbums({gid: gid})@.aid[0];
+            var thumbs = API.photos.get({gid: gid, aid:album_id});
+            return thumbs;
+        ',$gid));
+        return $a;
     }
 
     public function groups_getByIdWithLocation($gids,$fields = null){
@@ -30,13 +39,13 @@ class VK_CmsApi extends VK_DesktopApi
         $args = json_encode($args);
 
         $v = $this->Execute(sprintf('
-var group = API.groups.getById(%s);
-group = group[0];
+            var group = API.groups.getById(%s);
+            group = group[0];
 
-var city = API.places.getCityById({"cids": group["city"]})[0];
-var country = API.places.getCountryById({"cids": group["country"]})[0];
+            var city = API.places.getCityById({"cids": group["city"]})[0];
+            var country = API.places.getCountryById({"cids": group["country"]})[0];
 
-return {"group":group,"city": city, "country":country};
+            return {"group":group,"city": city, "country":country};
 ',$args));
         $v['group']['city'] = $v['city'];
         $v['group']['country'] = $v['country'];
