@@ -151,10 +151,110 @@ class VK_CmsApi extends VK_DesktopApi
         }
         return $data;
     }
+
+    
+    public function users_search_hacky($p){
+        $this->LoginUser();
+
+        if(isset($p['limit'])){
+            $limit = $p['limit']; unset($p['limit']);
+        }else{
+            $limit = 30;
+        }
+
+        $postParams = array();
+        foreach($p as $param=>$v){
+            if(!in_array($param,array('offset','al'))){
+                $postParams['c['.$param.']'] = $v;
+            }else{
+                $postParams[$param] = $v;
+            }
+        }
+        
+        isset($postParams['al']) or $postParams['al'] = 1;
+        $chans = array();
+        $lastAttempt = false;
+
+        do{
+            $postEncoded = $this->Params($postParams);
+            $response = $this->Curl(self::VK_URL.'al_search.php',
+                $postEncoded,
+                array(
+                    CURLOPT_POST => true,
+                    CURLOPT_COOKIE =>$this->config['user_cookie'],
+                    /*CURLOPT_HTTPHEADER => array(
+                        'X-Requested-With: XMLHttpRequest',
+                        'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11'
+                    ),
+                    CURLOPT_REFERER => self::VK_URL.'al_search.php?'.urlencode($postEncoded)*/
+                )
+            );
+            $html = iconv('windows-1251','UTF-8',$response['contents']);
+
+
+            $delimPos = strpos($html ,'<div');
+            $jsonPart = substr($html ,0,$delimPos);
+            $htmlPart = substr($html, $delimPos);
+
+            $parsedChans = $this->parsePeopleSearchResult($htmlPart);
+            $chans = array_merge($chans,$parsedChans);
+            
+            $postParams['offset'] = sizeof($parsedChans);
+
+            preg_match('/"has_more":(true|false)/',$jsonPart ,$hasMoreMatch);
+            if(!isset($hasMoreMatch[1]) || $hasMoreMatch[1] != 'true' || sizeof($chans) > $limit){
+                $lastAttempt = true;
+            }else{
+                sleep(0.5);
+            }
+        } while(!$lastAttempt);
+
+        return $chans;
+    }
+
+    protected function parsePeopleSearchResult($html){
+        $html = mb_convert_encoding($html, 'HTML-ENTITIES', "UTF-8");
+
+        //regexp all over the place
+
+        $chans = array();
+        $saw = new nokogiri($html);
+        $er = error_reporting(0);
+
+        foreach($saw->get('div.people_row') as $man){
+            $avatar = Arr::path($man,'div.0.a.0.img.src');
+
+            preg_match('/\/u(\d+)\//',$avatar,$id);
+            $id = $id[1];
+
+            $man = Arr::path($man,'div.1.div');
+                $handler = Arr::path($man,'0.a.href');
+                $name    = Arr::path($man,'0.a.#text');
+                $uni = Arr::path($man,'1.#text');
+                    preg_match('/(.+) \'(\d{2})/',$uni,$uni);
+                    $year = $uni[2];
+                    $uni = $uni[1];
+                $age = Arr::path($man,'2.#text');
+                $online = Arr::path($man,'3.#text');
+
+            $chans[] = array(
+                'id'=>'id'.$id,
+                'avatar' => $avatar,
+                'name' => $name,
+                'handler' => $handler,
+                'year' => $year,
+                'uni'=> $uni,
+                'online' => $online,
+            );
+        }
+        error_reporting($er);
+
+        return $chans;
+    }
 	
 	/**
 	 * @static
-	 * @param  $seconds Seconds to transform
+	 * @param  $seconds int Seconds to transform
 	 * @return string time in minutes
 	 */
 	public static function duration($seconds){
