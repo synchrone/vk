@@ -18,7 +18,7 @@ class VK_CmsApi extends VK_DesktopApi
                             'hash'=>$uimage['hash']),
                       $giduid
                     );
-        $response = $this->photos_saveWallPhoto($uimage);
+        $response = $this->Call('photos.saveWallPhoto',$uimage);
         return $response[0];
     }
 
