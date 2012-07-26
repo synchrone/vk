@@ -1,6 +1,6 @@
 <?php defined('SYSPATH') or die('No direct script access.');
 /** @class VK */
-class VKDoc_ReturnValue extends stdClass implements ArrayAccess
+class VKDoc_ReturnValue extends ArrayObject
 {
     public static function factory($method,$data){
         $clsname = get_called_class().'_'.$method;
@@ -10,37 +10,15 @@ class VKDoc_ReturnValue extends stdClass implements ArrayAccess
         return new VKDoc_ReturnValue($data);
     }
 
-    protected $_data;
     public function __construct($data){
-        $this->_data = $data;
+        parent::__construct($data,ArrayObject::ARRAY_AS_PROPS);
     }
 
-    public function offsetExists($offset)
-    {
-        return isset($this->_data[$offset]);
+    public function offsetGet($index){
+        $v = parent::offsetGet($index);
+        if(is_array($v)){
+            return new ArrayObject($v,$this->getFlags(),$this->getIteratorClass());
+        }
+        return $v;
     }
-
-    public function offsetGet($offset)
-    {
-        return $this->_data[$offset];
-    }
-
-    public function offsetSet($offset, $value)
-    {
-        $this->_data[$offset] = $value;
-    }
-
-    public function offsetUnset($offset)
-    {
-        unset($this->_data[$offset]);
-    }
-
-    public function __get($offset){
-        return $this->_data[$offset];
-    }
-
-    public function unwrap(){
-        return $this->_data;
-    }
-
 }
