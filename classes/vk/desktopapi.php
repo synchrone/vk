@@ -2,6 +2,7 @@
 
 
 class VK_DesktopApi extends VK_Api{
+    const BLANK_OAUTH = 'https://oauth.vk.com/blank.html';
 
     private $accessLevels = array(
         //'notify', //Пользователь разрешил отправлять ему уведомления.
@@ -169,7 +170,7 @@ class VK_DesktopApi extends VK_Api{
     }
 
     protected function LoginUser(){
-        list($login_url,$params) = $this->GetUserLoginUrl('blank.html', true);
+        list($login_url,$params) = $this->GetUserLoginUrl(self::BLANK_OAUTH, true);
         $params['display'] = 'wap';
 
         //This gonna get us login form, as no cookies provided
@@ -219,15 +220,16 @@ class VK_DesktopApi extends VK_Api{
             $params['scope'] =  $scope;
         }
 
-        return array('https://api.vk.com/oauth/authorize', $params);
+        return array('https://oauth.vk.com/authorize', $params);
     }
 
     /**
      * @param string $code App auth code returned by user
+     * @param string $redirect_url The local url passed to GetUserLoginUrl()
      * @return string VK API Token
      * @throws VK_Exception
      */
-    public function LoginApp($code = null){
+    public function LoginApp($code = null, $redirect_url = null){
         if(isset($this->config['token']) && //authd
                 is_array($this->config['token']) &&
                 $this->config['token']['access_token'] !== null && //got a token
@@ -240,16 +242,19 @@ class VK_DesktopApi extends VK_Api{
         }
 
         if($code === null){
-            $code = $this->UserAuthorizeApp();
+            $code = $this->UserAuthorizeApp(); //Fake the user clicking the buttons
+            $redirect_url = self::BLANK_OAUTH; // as per LoginUser()
         }
-        $token = $this->Curl('https://api.vk.com/oauth/access_token',array(
+
+        $token = $this->Curl('https://oauth.vk.com/oauth/access_token',array(
             'client_id' => $this->config['app_id'],
             'client_secret' => $this->config['app_secret'],
-            'code' => $code
+            'code' => $code,
+            'redirect_uri' => $redirect_url
         ));
         $token = json_decode($token['contents'],true);
         if(isset($token['error'])){
-            throw new VK_Exception($token['error_description'],$token['error']);
+            throw new VK_Exception($token['info'],$token['error']);
         }
         if($token['expires_in'] > 0){ $token['expire_time'] = time() + $token['expires_in']; }else{
             $token['expire_time'] = -1;

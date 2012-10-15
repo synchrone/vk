@@ -26,7 +26,9 @@ class Provider_VK extends Provider
     {
         $vk = VK::Instance();
         if ($code = Arr::get($_GET, 'code')) {
-            $vk->LoginApp($code);
+            $vk->LoginApp($code,
+                Route::url('user/provider_return', array('provider' => 'vk'), true)
+            );
 
             $this->user = $vk->Call('users.get', array(
                 'uids' => $vk->GetToken('user_id')
