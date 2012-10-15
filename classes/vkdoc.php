@@ -47,6 +47,7 @@ class VKDoc
         'docs.getUploadServer',
         'audio.getUploadServer',
         'wall.getPhotoUploadServer',
+        'leads.getActive'
     );
 
     public function __construct(){
@@ -98,6 +99,9 @@ class VKDoc
         return $this->_last_modified;
     }
 
+    /**
+     * @return VKDoc_Method[]
+     */
     public function get_methods(){
         return $this->_methods;
     }

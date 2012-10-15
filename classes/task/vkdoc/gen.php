@@ -33,7 +33,7 @@ class Task_VKDoc_Gen extends Minion_Task
         if($params['return-types']=='true'){
             //Notice: this code generates return value dummy classes without @property hint PHPDocs.
             $values_path = MODPATH.'vk/classes/vkdoc/returnvalue/';
-            foreach($doc->get_methods() as /** @var $val VKDoc_Method*/ $val)
+            foreach($doc->get_methods() as $val)
             {
                 $safename = str_replace('_',DIRECTORY_SEPARATOR,strtolower($val->get_safename()));
                 $filename = $values_path.$safename.EXT;
