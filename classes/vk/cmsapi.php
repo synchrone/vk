@@ -10,15 +10,11 @@ class VK_CmsApi extends VK_DesktopApi
             CURLOPT_POST=>1,
             CURLOPT_POSTFIELDS=>array('photo'=>'@'.$filename)
         ));
-        $uimage = (array)json_decode($uploaded_image['contents']);
 
-        $uimage = array_merge(
-                      array('server'=>$uimage['server'],
-                            'photo'=>$uimage['photo'],
-                            'hash'=>$uimage['hash']),
-                      $giduid
-                    );
+        $uimage = (array)json_decode($uploaded_image['contents']);
+        //$uimage = array_merge($uimage,$giduid);
         $response = $this->Call('photos.saveWallPhoto',$uimage);
+
         return $response[0];
     }
 
