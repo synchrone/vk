@@ -136,7 +136,13 @@ class VK_DesktopApi extends VK_Api{
     private function UserAuthorizeApp(){
         $last_request = $this->LoginUser();
 
-        if(strpos($last_request['contents'],'Login success')===false){
+        $rurl = end($last_request['info']);
+        $rurl=$rurl['url'];
+        if(($erroffset = strpos($rurl,'error_description=')) !== false){
+            throw new VK_Exception(substr($rurl,urldecode($erroffset)),$last_request);
+        }
+
+        if(strpos($rurl,'#code')===false){
             //Stage 2: Granting perms
             $nokopage = Nokogiri::fromHtml($last_request['contents']);
             $form = $nokopage->get('form')->toArray();
@@ -158,12 +164,8 @@ class VK_DesktopApi extends VK_Api{
                 CURLOPT_FOLLOWLOCATION => false,
                 CURLOPT_COOKIE => $last_request['cookie']
             ));
-        }
-
-        $rurl = end($last_request['info']);
-        $rurl=$rurl['url'];
-        if(($erroffset = strpos($rurl,'error_description=')) !== false){
-            throw new VK_Exception(substr($rurl,urldecode($erroffset)),$last_request);
+            $rurl = end($last_request['info']);
+            $rurl=$rurl['url'];
         }
         preg_match('/code=([a-zA-Z0-9]+)/',$rurl,$code);
         return $code[1];
