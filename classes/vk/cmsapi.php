@@ -4,15 +4,20 @@ class VK_CmsApi extends VK_DesktopApi
 {
     const VK_URL = 'http://vk.com/';
 
-    public function wall_uploadImage($filename,$giduid=array()){
-        $uploadURL = $this->photos_getWallUploadServer($giduid);
+    public function wall_uploadImage($filename, $uid = null, $gid = null){
+        $uploadURL = $this->photos_getWallUploadServer($uid,$gid);
         $uploaded_image = $this->Curl($uploadURL['upload_url'],null,array(
             CURLOPT_POST=>1,
             CURLOPT_POSTFIELDS=>array('photo'=>'@'.$filename)
         ));
 
         $uimage = (array)json_decode($uploaded_image['contents']);
-        //$uimage = array_merge($uimage,$giduid);
+        if($uid != null){
+            $uimage['uid'] = $uid;
+        }
+        if($gid != null){
+            $uimage['gid'] = $gid;
+        }
         $response = $this->Call('photos.saveWallPhoto',$uimage);
 
         return $response[0];
