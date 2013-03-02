@@ -4,9 +4,9 @@ class VK_Exception_Captcha extends VK_Exception {
     private $error;
 
     public function __construct($request_info,$error_array) {
-        parent::__construct($error_array['error_msg'],$error_array['error_code']);
         $this->error = $error_array;
         $this->request_info = $request_info;
+        parent::__construct($this->__toString(),$error_array['error_code']);
     }
 
     public function __toString(){
