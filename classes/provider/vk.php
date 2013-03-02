@@ -9,9 +9,9 @@ class Provider_VK extends Provider
      * Get the URL to redirect to.
      * @return string
      */
-    public function redirect_url($return_url)
+    public function redirect_url($return_url, array $extra = array())
     {
-        $vk = VK::Instance();
+        $vk = VK::Instance(Kohana::$config->load('vk.auth_group'));
         list($url, $params) = $vk->GetUserLoginUrl(
             Route::url('user/provider_return', array('provider' => 'vk'), true)
         );

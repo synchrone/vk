@@ -1,6 +1,7 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 
 return array(
+    'auth_group' => 'default',
     'default' =>array(
         /*'token' => array(
             'access_token'=>'', //as returned by vk oauth
@@ -13,7 +14,5 @@ return array(
 
         'user_email'    => '',
         'user_pass'     => '',
-
-        'group_name' => '',
     ),
 );
