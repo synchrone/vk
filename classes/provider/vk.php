@@ -12,9 +12,10 @@ class Provider_VK extends Provider
     public function redirect_url($return_url, array $extra = array())
     {
         $vk = VK::Instance(Kohana::$config->load('vk.auth_group'));
-        list($url, $params) = $vk->GetUserLoginUrl(
-            Route::url('user/provider_return', array('provider' => 'vk'), true)
-        );
+
+        Session::instance()->set('vk_return_url',$return_url);//for later
+
+        list($url, $params) = $vk->GetUserLoginUrl($return_url, '');
         return $url . '?' . $vk->Params($params);
     }
 
@@ -24,11 +25,11 @@ class Provider_VK extends Provider
      */
     public function verify()
     {
-        $vk = VK::Instance();
-        if ($code = Arr::get($_GET, 'code')) {
-            $vk->LoginApp($code,
-                Route::url('user/provider_return', array('provider' => 'vk'), true)
-            );
+        $vk = VK::Instance(Kohana::$config->load('vk.auth_group'));
+        if ($code = Arr::get($_GET, 'code'))
+        {
+            $return_url = Session::instance()->get('vk_return_url');
+            $vk->LoginApp($code, $return_url);
 
             $this->user = $vk->Call('users.get', array(
                 'uids' => $vk->GetToken('user_id')
