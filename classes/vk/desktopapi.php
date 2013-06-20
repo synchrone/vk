@@ -259,7 +259,7 @@ class VK_DesktopApi extends VK_Api{
         ));
         $token = json_decode($token['contents'],true);
         if(isset($token['error'])){
-            throw new VK_Exception($token['info'],$token['error']);
+            throw new VK_Exception(Arr::get($token,'info', Arr::get($token,'error_description')),$token['error']);
         }
         if($token['expires_in'] > 0){ $token['expire_time'] = time() + $token['expires_in']; }else{
             $token['expire_time'] = -1;
